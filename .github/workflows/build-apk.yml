@@ -145,6 +145,54 @@ jobs:
           phone.write_text(p)
           PY
 
+      - name: Add fullscreen stretch toggle on watch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
+          s = p.read_text()
+          marker = '        setContentView(root);'
+          code = """        Button fullscreen = new Button(this);
+                  fullscreen.setText("> OPEN FULLSCREEN // STRETCH");
+                  fullscreen.setTextColor(0xFF39FF88);
+                  fullscreen.setTextSize(10);
+                  fullscreen.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
+                  fullscreen.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF10251A));
+                  root.addView(fullscreen, new LinearLayout.LayoutParams(-1, 34));
+                  final boolean[] fullscreenMode = {false};
+                  fullscreen.setOnClickListener(v -> {
+                      fullscreenMode[0] = !fullscreenMode[0];
+                      if (fullscreenMode[0]) {
+                          header.setVisibility(android.view.View.GONE);
+                          address.setVisibility(android.view.View.GONE);
+                          connect.setVisibility(android.view.View.GONE);
+                          status.setVisibility(android.view.View.GONE);
+                          root.setPadding(0, 0, 0, 0);
+                          screen.setScaleType(ImageView.ScaleType.FIT_XY);
+                          fullscreen.setText("< EXIT FULLSCREEN");
+                          getWindow().getDecorView().setSystemUiVisibility(
+                              android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                              | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                              | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                      } else {
+                          header.setVisibility(android.view.View.VISIBLE);
+                          address.setVisibility(android.view.View.VISIBLE);
+                          connect.setVisibility(android.view.View.VISIBLE);
+                          status.setVisibility(android.view.View.VISIBLE);
+                          root.setPadding(6, 6, 6, 6);
+                          screen.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                          fullscreen.setText("> OPEN FULLSCREEN // STRETCH");
+                          getWindow().getDecorView().setSystemUiVisibility(0);
+                      }
+                  });
+          """
+          if marker not in s:
+              raise SystemExit("Could not locate WatchActivity content view insertion point")
+          if 'OPEN FULLSCREEN // STRETCH' not in s:
+              s = s.replace(marker, code + marker, 1)
+          p.write_text(s)
+          PY
+
       - name: Upload patched source for inspection
         uses: actions/upload-artifact@v4
         with:
