@@ -1,0 +1,43 @@
+
+name: Build AKIRA REMOTE APKs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Extract source
+        run: |
+          unzip -q AKIRA_REMOTE_source.zip -d source
+
+      - name: Build APKs
+        run: |
+          cd source/AKIRA_REMOTE
+          gradle assembleDebug
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: AKIRA-REMOTE-APKs
+          path: |
+            source/AKIRA_REMOTE/phone/build/outputs/apk/debug/*.apk
+            source/AKIRA_REMOTE/watch/build/outputs/apk/debug/*.apk
+            
