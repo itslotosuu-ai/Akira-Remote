@@ -4,7 +4,7 @@ name: Build AKIRA REMOTE APKs
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -25,8 +25,18 @@ jobs:
           gradle-version: '8.9'
 
       - name: Extract source
+        run: unzip -q AKIRA_REMOTE_source.zip -d source
+
+      - name: Fix WebSocket method
         run: |
-          unzip -q AKIRA_REMOTE_source.zip -d source
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/CaptureService.java")
+          s = p.read_text()
+          s = s.replace("server.broadcast(out.toByteArray());", "server.sendFrame(out.toByteArray());")
+          s = s.replace("void broadcast(byte[] frame) {", "void sendFrame(byte[] frame) {")
+          p.write_text(s)
+          PY
 
       - name: Build APKs
         run: |
@@ -40,4 +50,3 @@ jobs:
           path: |
             source/AKIRA_REMOTE/phone/build/outputs/apk/debug/*.apk
             source/AKIRA_REMOTE/watch/build/outputs/apk/debug/*.apk
-            
