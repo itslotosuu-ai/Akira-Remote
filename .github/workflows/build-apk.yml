@@ -59,6 +59,51 @@ jobs:
           p.write_text(s)
           PY
 
+
+      - name: Preserve phone screen proportions on watch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
+          s = p.read_text()
+          s = s.replace("screen.setScaleType(ImageView.ScaleType.FIT_XY);",
+                        "screen.setScaleType(ImageView.ScaleType.FIT_CENTER);")
+          old = """            float x = clamp(e.getX() / screen.getWidth()), y = clamp(e.getY() / screen.getHeight());
+            if (e.getAction() == MotionEvent.ACTION_DOWN) {
+                downX=x; downY=y; downTime=System.currentTimeMillis(); return true;
+            }
+            if (e.getAction() == MotionEvent.ACTION_UP) {"""
+          new = """            float[] point = mapToPhoneScreen(e.getX(), e.getY());
+            if (point == null) return true;
+            float x = point[0], y = point[1];
+            if (e.getAction() == MotionEvent.ACTION_DOWN) {
+                downX=x; downY=y; downTime=System.currentTimeMillis(); return true;
+            }
+            if (e.getAction() == MotionEvent.ACTION_UP) {"""
+          if old not in s:
+              raise SystemExit("Could not locate watch touch mapping block")
+          s = s.replace(old, new, 1)
+          marker = "    private float clamp(float x) { return Math.max(0f, Math.min(1f,x)); }"
+          helper = """    private float[] mapToPhoneScreen(float viewX, float viewY) {
+            if (screen.getDrawable() == null) return null;
+            float imageW = screen.getDrawable().getIntrinsicWidth();
+            float imageH = screen.getDrawable().getIntrinsicHeight();
+            if (imageW <= 0 || imageH <= 0) return null;
+            float scale = Math.min(screen.getWidth() / imageW, screen.getHeight() / imageH);
+            float drawnW = imageW * scale, drawnH = imageH * scale;
+            float left = (screen.getWidth() - drawnW) / 2f;
+            float top = (screen.getHeight() - drawnH) / 2f;
+            float x = (viewX - left) / drawnW, y = (viewY - top) / drawnH;
+            if (x < 0f || x > 1f || y < 0f || y > 1f) return null;
+            return new float[]{x, y};
+          }
+          private float clamp(float x) { return Math.max(0f, Math.min(1f,x)); }"""
+          if marker not in s:
+              raise SystemExit("Could not locate clamp helper")
+          s = s.replace(marker, helper, 1)
+          p.write_text(s)
+          PY
+
       - name: Upload patched source for inspection
         uses: actions/upload-artifact@v4
         with:
