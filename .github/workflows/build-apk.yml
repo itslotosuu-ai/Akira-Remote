@@ -33,6 +33,9 @@ jobs:
           import re
           p = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/CaptureService.java")
           s = p.read_text()
+          if s.index('projection.registerCallback') < s.index('display = projection.createVirtualDisplay'):
+              p.write_text(s)
+              raise SystemExit(0)
           pattern = r'        display = projection\.createVirtualDisplay\("AKIRA_REMOTE", width, height, density,\n            DisplayManager\.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, reader\.getSurface\(\), null, handler\);\n        server = new RemoteServer\(new InetSocketAddress\(PORT\)\);\n        server\.start\(\);\n        projection\.registerCallback\(new MediaProjection\.Callback\(\) \{\n            @Override public void onStop\(\) \{ stopSelf\(\); \}\n        \}, handler\);'
           replacement = '''        // Android 14+ requires callback registration before creating the virtual display.
               projection.registerCallback(new MediaProjection.Callback() {
