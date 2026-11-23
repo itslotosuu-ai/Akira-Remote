@@ -63,48 +63,86 @@ jobs:
           PY
 
 
-      - name: Preserve phone screen proportions on watch
+      - name: Cyber terminal UI and correct screen proportions
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
-          s = p.read_text()
-          s = s.replace("screen.setScaleType(ImageView.ScaleType.FIT_XY);",
-                        "screen.setScaleType(ImageView.ScaleType.FIT_CENTER);")
-          old = """            float x = clamp(e.getX() / screen.getWidth()), y = clamp(e.getY() / screen.getHeight());
-            if (e.getAction() == MotionEvent.ACTION_DOWN) {
-                downX=x; downY=y; downTime=System.currentTimeMillis(); return true;
-            }
-            if (e.getAction() == MotionEvent.ACTION_UP) {"""
-          new = """            float[] point = mapToPhoneScreen(e.getX(), e.getY());
-            if (point == null) return true;
-            float x = point[0], y = point[1];
-            if (e.getAction() == MotionEvent.ACTION_DOWN) {
-                downX=x; downY=y; downTime=System.currentTimeMillis(); return true;
-            }
-            if (e.getAction() == MotionEvent.ACTION_UP) {"""
+          import re
+          watch = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
+          s = watch.read_text()
+          s = s.replace("root.setPadding(8, 10, 8, 8);", "root.setPadding(6, 6, 6, 6);")
+          s = s.replace("root.setBackgroundColor(Color.rgb(12,15,21));", "root.setBackgroundColor(Color.BLACK);")
+          s = s.replace('''        address = new EditText(this);''', '''        TextView header = new TextView(this);
+                  header.setText("AKIRA // REMOTE");
+                  header.setTextColor(0xFF39FF88);
+                  header.setTextSize(13);
+                  header.setGravity(Gravity.CENTER);
+                  header.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
+                  root.addView(header, new LinearLayout.LayoutParams(-1, 22));
+                  address = new EditText(this);''')
+          s = s.replace('address.setHint("IP телефона");', 'address.setHint("TARGET IP // PHONE");')
+          s = s.replace('address.setTextColor(Color.WHITE);', 'address.setTextColor(0xFF39FF88);\n        address.setTypeface(android.graphics.Typeface.MONOSPACE);\n        address.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF168A50));')
+          s = s.replace('connect.setText("CONNECT");', 'connect.setText("> INITIATE LINK");\n        connect.setTextColor(0xFF39FF88);\n        connect.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);\n        connect.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF10251A));')
+          s = s.replace('status.setText("Ожидание подключения");', 'status.setText("SYS:// STANDBY");\n        status.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);')
+          s = s.replace('status.setTextColor(0xFF4DD0E1);', 'status.setTextColor(0xFF39FF88);')
+          s = s.replace('screen.setScaleType(ImageView.ScaleType.FIT_XY);', 'screen.setScaleType(ImageView.ScaleType.FIT_CENTER);')
+          old = 'float x = clamp(e.getX() / screen.getWidth()), y = clamp(e.getY() / screen.getHeight());'
+          new = 'float[] mapped = mapToPhoneScreen(e.getX(), e.getY());\n            if (mapped == null) return true;\n            float x = mapped[0], y = mapped[1];'
           if old not in s:
-              raise SystemExit("Could not locate watch touch mapping block")
+              raise SystemExit("Touch coordinate line not found")
           s = s.replace(old, new, 1)
-          marker = "    private float clamp(float x) { return Math.max(0f, Math.min(1f,x)); }"
-          helper = """    private float[] mapToPhoneScreen(float viewX, float viewY) {
-            if (screen.getDrawable() == null) return null;
-            float imageW = screen.getDrawable().getIntrinsicWidth();
-            float imageH = screen.getDrawable().getIntrinsicHeight();
-            if (imageW <= 0 || imageH <= 0) return null;
-            float scale = Math.min(screen.getWidth() / imageW, screen.getHeight() / imageH);
-            float drawnW = imageW * scale, drawnH = imageH * scale;
-            float left = (screen.getWidth() - drawnW) / 2f;
-            float top = (screen.getHeight() - drawnH) / 2f;
-            float x = (viewX - left) / drawnW, y = (viewY - top) / drawnH;
-            if (x < 0f || x > 1f || y < 0f || y > 1f) return null;
-            return new float[]{x, y};
-          }
-          private float clamp(float x) { return Math.max(0f, Math.min(1f,x)); }"""
+          marker = '    private float clamp(float x) { return Math.max(0f, Math.min(1f,x)); }'
+          helper = '''    private float[] mapToPhoneScreen(float viewX, float viewY) {
+                  if (screen.getDrawable() == null) return null;
+                  float imageW = screen.getDrawable().getIntrinsicWidth();
+                  float imageH = screen.getDrawable().getIntrinsicHeight();
+                  if (imageW <= 0 || imageH <= 0) return null;
+                  float scale = Math.min(screen.getWidth() / imageW, screen.getHeight() / imageH);
+                  float drawnW = imageW * scale, drawnH = imageH * scale;
+                  float left = (screen.getWidth() - drawnW) / 2f;
+                  float top = (screen.getHeight() - drawnH) / 2f;
+                  float x = (viewX - left) / drawnW, y = (viewY - top) / drawnH;
+                  if (x < 0f || x > 1f || y < 0f || y > 1f) return null;
+                  return new float[]{x, y};
+              }
+              private float clamp(float x) { return Math.max(0f, Math.min(1f,x)); }'''
           if marker not in s:
-              raise SystemExit("Could not locate clamp helper")
+              raise SystemExit("Clamp helper not found")
           s = s.replace(marker, helper, 1)
-          p.write_text(s)
+          s = s.replace('status.setText("CONNECTED")', 'status.setText("LINK ESTABLISHED // RX")')
+          s = s.replace('status.setText("DISCONNECTED")', 'status.setText("LINK LOST // IDLE")')
+          s = s.replace('status.setText("Ошибка соединения")', 'status.setText("ERR:// CONNECTION FAILED")')
+          s = s.replace('status.setText("Подключение…")', 'status.setText("HANDSHAKE // TCP 8765…")')
+          s = s.replace('status.setText("Введите IP телефона")', 'status.setText("ERR:// TARGET IP REQUIRED")')
+          watch.write_text(s)
+
+          phone = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/MainActivity.java")
+          p = phone.read_text()
+          p = p.replace('getWindow().setStatusBarColor(0xFF10131A);', 'getWindow().setStatusBarColor(0xFF000000);')
+          p = p.replace('getWindow().setNavigationBarColor(0xFF10131A);', 'getWindow().setNavigationBarColor(0xFF000000);')
+          p = p.replace('layout.setPadding(28, 48, 28, 28);', 'layout.setPadding(24, 42, 24, 24);')
+          p = p.replace('layout.setBackgroundColor(0xFF10131A);', 'layout.setBackgroundColor(0xFF000000);')
+          p = p.replace('title.setText("AKIRA  /  REMOTE");', 'title.setText("AKIRA // REMOTE");\n        title.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);')
+          p = p.replace('title.setTextColor(0xFFFFFFFF);', 'title.setTextColor(0xFF39FF88);')
+          p = p.replace('subtitle.setText("PHONE CONTROL • WEAR OS");', 'subtitle.setText("SYS.BOOT  •  WEAR OS LINK  •  PORT 8765");\n        subtitle.setTypeface(android.graphics.Typeface.MONOSPACE);')
+          p = p.replace('subtitle.setTextColor(0xFF8D9AAF);', 'subtitle.setTextColor(0xFF168A50);')
+          p = p.replace('status.setText("Состояние: ожидание");', 'status.setText("SYS:// STANDBY");\n        status.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);')
+          p = p.replace('status.setTextColor(0xFFE2E8F0);', 'status.setTextColor(0xFF39FF88);')
+          p = p.replace('ip.setText("IP телефона: " + getLocalIp());', 'ip.setText("TARGET // " + getLocalIp() + "\\nPROTO:// WS 8765");\n        ip.setTypeface(android.graphics.Typeface.MONOSPACE);')
+          p = p.replace('ip.setTextColor(0xFF4DD0E1);', 'ip.setTextColor(0xFF39FF88);')
+          p = p.replace('access.setText("Разрешить управление");', 'access.setText("> ENABLE CONTROL SERVICE");')
+          p = p.replace('start.setText("Начать трансляцию");', 'start.setText("> START SCREEN STREAM");')
+          p = p.replace('stop.setText("Остановить трансляцию");', 'stop.setText("> TERMINATE STREAM");')
+          p = p.replace('status.setText("Состояние: трансляция запущена");', 'status.setText("STREAM:// ACTIVE  •  TX");')
+          p = p.replace('status.setText("Состояние: остановлено");', 'status.setText("STREAM:// TERMINATED");')
+          p = p.replace('status.setText("Состояние: разрешение не получено");', 'status.setText("ERR:// CAPTURE PERMISSION DENIED");')
+          p = p.replace('hint.setText("Телефон и часы должны быть в одной Wi‑Fi-сети. Введите IP выше в приложении на часах. Порт: 8765.");', 'hint.setText("PROTOCOL: WEBSOCKET / TCP\\nPAIRING: SAME WI-FI NETWORK\\nAUTH: LOCAL NETWORK\\nENTER TARGET IP ON WATCH.");\n        hint.setTypeface(android.graphics.Typeface.MONOSPACE);')
+          p = p.replace('hint.setTextColor(0xFF9AA7B8);', 'hint.setTextColor(0xFF168A50);')
+          for name in ("access", "start", "stop"):
+              needle = '        layout.addView(' + name + ','
+              insert = '        ' + name + '.setTextColor(0xFF39FF88);\n        ' + name + '.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);\n        ' + name + '.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF10251A));\n' + needle
+              p = p.replace(needle, insert, 1)
+          phone.write_text(p)
           PY
 
       - name: Upload patched source for inspection
