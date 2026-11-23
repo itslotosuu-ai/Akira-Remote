@@ -26,12 +26,33 @@ jobs:
       - name: Extract source
         run: unzip -q AKIRA_REMOTE_source.zip -d source
 
-      - name: Upload source for inspection
-        uses: actions/upload-artifact@v4
-        with:
-          name: AKIRA-REMOTE-source
-          path: source/AKIRA_REMOTE
-          retention-days: 1
+      - name: Patch MediaProjection startup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/CaptureService.java")
+          s = p.read_text()
+          old = """        display = projection.createVirtualDisplay("AKIRA_REMOTE", width, height, density,
+                  DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, reader.getSurface(), null, handler);
+              server = new RemoteServer(new InetSocketAddress(PORT));
+              server.start();
+              projection.registerCallback(new MediaProjection.Callback() {
+                  @Override public void onStop() { stopSelf(); }
+              }, handler);
+              handler.post(captureRunnable);"""
+          new = """        // Android 14+ requires the callback to be registered before creating the virtual display.
+              projection.registerCallback(new MediaProjection.Callback() {
+                  @Override public void onStop() { stopSelf(); }
+              }, handler);
+              display = projection.createVirtualDisplay("AKIRA_REMOTE", width, height, density,
+                  DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, reader.getSurface(), null, handler);
+              server = new RemoteServer(new InetSocketAddress(PORT));
+              server.start();
+              handler.post(captureRunnable);"""
+          if old not in s:
+              raise SystemExit("Expected MediaProjection startup block was not found; refusing to patch.")
+          p.write_text(s.replace(old, new, 1))
+          PY
 
       - name: Fix WebSocket method
         run: |
@@ -43,6 +64,13 @@ jobs:
           s = s.replace("void broadcast(byte[] frame) {", "void sendFrame(byte[] frame) {")
           p.write_text(s)
           PY
+
+      - name: Upload patched source for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: AKIRA-REMOTE-source
+          path: source/AKIRA_REMOTE
+          retention-days: 1
 
       - name: Build APKs
         run: |
