@@ -282,40 +282,19 @@ jobs:
           from pathlib import Path
           watch = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
           s = watch.read_text()
-          s = s.replace("import android.os.Bundle;", "import android.os.Bundle;\nimport android.os.Handler;\nimport android.os.Looper;")
-          s = s.replace("    private final AtomicReference<android.graphics.Bitmap> latest = new AtomicReference<>();", """    private final AtomicReference<android.graphics.Bitmap> latest = new AtomicReference<>();
-              private TextView hud, log;
-              private final Handler uiHandler = new Handler(Looper.getMainLooper());
-              private long pingStartedAt, lastRtt = -1, fpsWindowStart = System.currentTimeMillis();
-              private int frameCounter, currentFps;
-              private String phoneBattery = "--", phoneTemp = "--", frameSize = "--";
-              private final Runnable pingTask = new Runnable() {
-                  @Override public void run() {
-                      if (client != null && client.isOpen()) {
-                          try {
-                              pingStartedAt = System.currentTimeMillis();
-                              JSONObject ping = new JSONObject();
-                              ping.put("type", "ping");
-                              client.send(ping.toString());
-                          } catch (Exception ignored) {}
-                          uiHandler.postDelayed(this, 2500);
-                      }
-                  }
-              };""")
-          s = s.replace('''        root.addView(status, new LinearLayout.LayoutParams(-1, 24));
-          screen = new ImageView(this);''', '''        root.addView(status, new LinearLayout.LayoutParams(-1, 24));
-                  hud = new TextView(this);
+          anchor = '        root.addView(status, new LinearLayout.LayoutParams(-1, 24));'
+          hud = '''        hud = new TextView(this);
                   hud.setText("HUD:// WAITING FOR TELEMETRY");
                   hud.setTextColor(0xFFB8FFD0);
                   hud.setTextSize(9);
                   hud.setGravity(Gravity.CENTER);
                   hud.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
                   hud.setBackgroundColor(0xFF07130C);
-                  root.addView(hud, new LinearLayout.LayoutParams(-1, 25));
-          screen = new ImageView(this);''')
-          s = s.replace('''        setContentView(root);
-
-          connect.setOnClickListener''', '''        LinearLayout quick = new LinearLayout(this);
+                  root.addView(hud, new LinearLayout.LayoutParams(-1, 25));'''
+          if 'HUD:// WAITING FOR TELEMETRY' not in s:
+              if anchor not in s: raise SystemExit("HUD insertion anchor missing")
+              s = s.replace(anchor, anchor + "\\n" + hud, 1)
+          quick = '''        LinearLayout quick = new LinearLayout(this);
                   quick.setOrientation(LinearLayout.HORIZONTAL);
                   quick.setGravity(Gravity.CENTER);
                   String[] quickLabels = {"< BACK", "^ HOME", "RELINK"};
@@ -343,18 +322,18 @@ jobs:
                   log.setTextSize(8);
                   log.setTypeface(android.graphics.Typeface.MONOSPACE);
                   log.setMaxLines(2);
-                  root.addView(log, new LinearLayout.LayoutParams(-1, 28));
-                  setContentView(root);
-
-          connect.setOnClickListener''')
-          s = s.replace('''                @Override public void onOpen(ServerHandshake h) { runOnUiThread(() -> status.setText("LINK ESTABLISHED // RX")); }
-                  @Override public void onMessage(String m) {}
-                  @Override public void onMessage(java.nio.ByteBuffer bytes) {''', '''                @Override public void onOpen(ServerHandshake h) {
+                  root.addView(log, new LinearLayout.LayoutParams(-1, 28));'''
+          if 'LOG:// SYSTEM INITIALIZED' not in s:
+              s = s.replace('        setContentView(root);', quick + '\\n        setContentView(root);', 1)
+          old_open = '                @Override public void onOpen(ServerHandshake h) { runOnUiThread(() -> status.setText("LINK ESTABLISHED // RX")); }'
+          new_open = '''                @Override public void onOpen(ServerHandshake h) {
                               runOnUiThread(() -> { status.setText("LINK ESTABLISHED // RX"); appendLog("LINK ESTABLISHED"); updateHud(); });
                               uiHandler.removeCallbacks(pingTask);
                               uiHandler.post(pingTask);
-                          }
-                          @Override public void onMessage(String m) {
+                          }'''
+          if old_open in s: s = s.replace(old_open, new_open, 1)
+          old_msg = '                @Override public void onMessage(String m) {}'
+          new_msg = '''                @Override public void onMessage(String m) {
                               try {
                                   JSONObject reply = new JSONObject(m);
                                   if ("pong".equals(reply.optString("type"))) {
@@ -364,12 +343,10 @@ jobs:
                                       runOnUiThread(() -> updateHud());
                                   }
                               } catch (Exception ignored) {}
-                          }
-                  @Override public void onMessage(java.nio.ByteBuffer bytes) {''')
-          s = s.replace('''                    if (bmp != null) runOnUiThread(() -> screen.setImageBitmap(bmp));
-                  }
-                  @Override public void onClose(int c, String r, boolean remote) { runOnUiThread(() -> status.setText("LINK LOST // IDLE")); }
-                  @Override public void onError(Exception e) { runOnUiThread(() -> status.setText("ERR:// CONNECTION FAILED")); }''', '''                    if (bmp != null) runOnUiThread(() -> {
+                          }'''
+          if old_msg in s: s = s.replace(old_msg, new_msg, 1)
+          old_frame = '                    if (bmp != null) runOnUiThread(() -> screen.setImageBitmap(bmp));'
+          new_frame = '''                    if (bmp != null) runOnUiThread(() -> {
                                   screen.setImageBitmap(bmp);
                                   frameSize = bmp.getWidth() + "x" + bmp.getHeight();
                                   frameCounter++;
@@ -380,21 +357,21 @@ jobs:
                                       fpsWindowStart = now;
                                   }
                                   updateHud();
-                              });
-                  }
-                  @Override public void onClose(int c, String r, boolean remote) {
+                              });'''
+          if old_frame in s: s = s.replace(old_frame, new_frame, 1)
+          old_close = '                @Override public void onClose(int c, String r, boolean remote) { runOnUiThread(() -> status.setText("LINK LOST // IDLE")); }'
+          new_close = '''                @Override public void onClose(int c, String r, boolean remote) {
                               uiHandler.removeCallbacks(pingTask);
                               runOnUiThread(() -> { status.setText("LINK LOST // IDLE"); appendLog("LINK CLOSED"); });
-                          }
-                  @Override public void onError(Exception e) {
+                          }'''
+          if old_close in s: s = s.replace(old_close, new_close, 1)
+          old_error = '                @Override public void onError(Exception e) { runOnUiThread(() -> status.setText("ERR:// CONNECTION FAILED")); }'
+          new_error = '''                @Override public void onError(Exception e) {
                               runOnUiThread(() -> { status.setText("ERR:// CONNECTION FAILED"); appendLog("ERR: SOCKET"); });
-                          }''')
-          s = s.replace('''            client.connect();
-              status.setText("HANDSHAKE // TCP 8765…");''', '''            client.connect();
-                      appendLog("HANDSHAKE STARTED");
-              status.setText("HANDSHAKE // TCP 8765…");''')
-          s = s.replace('''    @Override protected void onDestroy() {
-              if (client != null) client.close();''', '''    private void sendCommand(String type) {
+                          }'''
+          if old_error in s: s = s.replace(old_error, new_error, 1)
+          if 'private void sendCommand(String type)' not in s:
+              methods = '''    private void sendCommand(String type) {
                   if (client == null || !client.isOpen()) { appendLog("COMMAND BLOCKED: OFFLINE"); return; }
                   try {
                       JSONObject command = new JSONObject();
@@ -417,49 +394,29 @@ jobs:
               private void updateHud() {
                   if (hud == null) return;
                   String rtt = lastRtt < 0 ? "--" : lastRtt + "ms";
-                  hud.setText("FPS " + currentFps + "  •  RTT " + rtt + "  •  BAT " + phoneBattery
-                      + "  •  TEMP " + phoneTemp + "  •  " + frameSize);
+                  hud.setText("FPS " + currentFps + " • RTT " + rtt + " • BAT " + phoneBattery
+                      + " • TEMP " + phoneTemp + " • " + frameSize);
               }
-              @Override protected void onDestroy() {
+          '''
+              s = s.replace('    @Override protected void onDestroy() {', methods + '    @Override protected void onDestroy() {', 1)
+          s = s.replace('''    @Override protected void onDestroy() {
+                  if (client != null) client.close();''', '''    @Override protected void onDestroy() {
                   uiHandler.removeCallbacks(pingTask);
-              if (client != null) client.close();''')
+                  if (client != null) client.close();''', 1)
           watch.write_text(s)
-
-          service = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/ControlAccessibilityService.java")
-          a = service.read_text()
-          if "public void goBack()" not in a:
-              a = a.replace("    public void tap(float nx, float ny)", """    public void goBack() { performGlobalAction(GLOBAL_ACTION_BACK); }
-              public void goHome() { performGlobalAction(GLOBAL_ACTION_HOME); }
-              public void tap(float nx, float ny)""")
-          service.write_text(a)
 
           capture = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/CaptureService.java")
           c = capture.read_text()
-          old_handler = '''                String type = j.optString("type");
-                          if ("tap".equals(type)) a.tap'''
-          new_handler = '''                String type = j.optString("type");
-                          if ("ping".equals(type)) {
-                              try {
-                                  Intent battery = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-                                  int level = battery == null ? -1 : battery.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-                                  int scale = battery == null ? 100 : battery.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
-                                  int temp = battery == null ? -1 : battery.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);
-                                  JSONObject pong = new JSONObject();
-                                  pong.put("type", "pong");
-                                  pong.put("battery", level < 0 ? "--" : Math.round(level * 100f / Math.max(1, scale)) + "%");
-                                  pong.put("temp", temp < 0 ? "--" : String.format(java.util.Locale.US, "%.1fC", temp / 10f));
-                                  conn.send(pong.toString());
-                              } catch (Exception ignored) {}
-                              return;
+          c = c.replace('''                ControlAccessibilityService a = ControlAccessibilityService.INSTANCE;
+                          if (a == null) return;
+                          String type = j.optString("type");''', '''                ControlAccessibilityService a = ControlAccessibilityService.INSTANCE;
+                          String type = j.optString("type");''', 1)
+          c = c.replace('''                    return;
                           }
-                          if ("tap".equals(type)) a.tap'''
-          if old_handler not in c:
-              raise SystemExit("Could not locate remote command handler")
-          c = c.replace(old_handler, new_handler, 1)
-          c = c.replace('''                else if ("swipe".equals(type)) a.swipe''', '''                else if ("back".equals(type)) a.goBack();
-                          else if ("home".equals(type)) a.goHome();
-                          else if ("swipe".equals(type)) a.swipe''', 1)
-          c = c.replace("import android.app.*;", "import android.app.*;\nimport android.content.IntentFilter;\nimport android.os.BatteryManager;")
+                          if ("tap".equals(type)) a.tap''', '''                    return;
+                          }
+                          if (a == null) return;
+                          if ("tap".equals(type)) a.tap''', 1)
           capture.write_text(c)
           PY
 
