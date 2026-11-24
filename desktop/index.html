@@ -39,6 +39,8 @@ body[data-wall="violet"]{background:radial-gradient(ellipse at 50% 0%,#211333 0,
 body[data-wall="amber"]{background:radial-gradient(ellipse at 50% 0%,#30200e 0,#090704 58%)}
 body[data-wall="plain"]:before,body[data-wall="plain"]:after{opacity:0}
 
+
+.pc-stream{margin-top:18px;padding-top:15px;border-top:1px solid var(--line)}.pc-stream h3{color:var(--green);font-size:13px;margin:0 0 10px}.pc-stream input,.pc-stream select{width:100%;background:#020604;border:1px solid var(--muted);color:var(--green);padding:10px;border-radius:7px;font:inherit;margin:4px 0 8px}.pc-stream .pc-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pc-stream .pc-state{font-size:10px;color:var(--muted);line-height:1.7;margin:8px 0}.pc-stream .pc-meter{height:4px;background:#10251a;border-radius:8px;overflow:hidden}.pc-stream .pc-meter span{display:block;height:100%;width:0;background:var(--green);box-shadow:0 0 12px var(--green);transition:width .2s}.pc-stream .pc-live{animation:statusGlow 1.5s ease-in-out infinite alternate}
 </style>
 </head>
 <body>
@@ -72,6 +74,15 @@ body[data-wall="plain"]:before,body[data-wall="plain"]:after{opacity:0}
   <div class="sub" id="appearanceStatus">LOCAL PROFILE // READY</div>
  </div>
 
+ <div class="pc-stream">
+  <h3>PC → PHONE // SCREEN BEAM</h3>
+  <input id="pcPhoneIp" placeholder="IP телефона, например 192.168.1.25" autocomplete="off">
+  <select id="pcDisplay"><option value="">Загрузка дисплеев…</option></select>
+  <div class="pc-actions"><button id="pcRefresh">SCAN DISPLAYS</button><button id="pcStart">▶ START STREAM</button><button id="pcStop" disabled>■ STOP STREAM</button><button id="pcFit">⛶ FIT VIEW</button></div>
+  <div id="pcStreamStatus" class="pc-state">SYS:// PC CAPTURE STANDBY • TARGET PORT 8766</div>
+  <div class="pc-meter"><span id="pcMeter"></span></div>
+  <div class="pc-state">Windows screen → Android phone. Same Wi-Fi required. The phone app must remain open to receive the stream.</div>
+ </div>
  <div class="hint">• Телефон и ПК должны быть в одной Wi‑Fi сети.<br>• На телефоне нажми START SCREEN STREAM.<br>• Клик по изображению отправляет касание.<br>• Зажми и перетащи мышь, чтобы отправить свайп.<br>• Для управления может потребоваться включить службу специальных возможностей на телефоне.</div>
  <div class="log" id="log">LOG:// CLIENT READY</div>
 </aside>
