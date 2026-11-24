@@ -31,7 +31,7 @@ function sendJson(socket, payload) {
 const server = http.createServer((req, res) => {
   if (req.method === "GET" && req.url === "/healthz") {
     res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
-    return res.end(JSON.stringify({ status: "ok", service: "akira-link-relay" }));
+    return res.end(JSON.stringify({ status: "ok", service: "synkron-link-relay" }));
   }
   res.writeHead(404, { "content-type": "application/json", "cache-control": "no-store" });
   res.end(JSON.stringify({ error: "not_found" }));
@@ -126,7 +126,7 @@ const cleanup = setInterval(() => {
 cleanup.unref();
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`AKIRA LINK relay listening on :${PORT}`);
+  console.log(`SYNKRON LINK relay listening on :${PORT}`);
 });
 
 function shutdown() {
