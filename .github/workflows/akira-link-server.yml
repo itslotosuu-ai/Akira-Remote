@@ -1,15 +1,15 @@
-name: AKIRA LINK Server
+name: SYNKRON LINK Server
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'server/**'
-      - '.github/workflows/akira-link-server.yml'
+      - '.github/workflows/synkron-link-server.yml'
   pull_request:
     paths:
       - 'server/**'
-      - '.github/workflows/akira-link-server.yml'
+      - '.github/workflows/synkron-link-server.yml'
   workflow_dispatch:
 
 jobs:
@@ -28,4 +28,4 @@ jobs:
       - name: Run relay integration tests
         run: npm test
       - name: Build container
-        run: docker build -t akira-link-relay:test .
+        run: docker build -t synkron-link-relay:test .
