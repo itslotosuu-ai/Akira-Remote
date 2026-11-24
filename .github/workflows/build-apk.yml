@@ -475,8 +475,8 @@ jobs:
                                   String net = caps == null ? "OFFLINE" : (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ? "WIFI" : "ONLINE");
                                   pong.put("network", net);
                                   conn.send(pong.toString());''', 1)
-          if "BatteryManager" not in c:
-              c = c.replace("import android.app.*;", "import android.app.*;" + chr(10) + "import android.content.IntentFilter;" + chr(10) + "import android.os.BatteryManager;", 1)
+          if "import android.net.ConnectivityManager;" not in c:
+              c = c.replace("import android.app.*;", "import android.app.*;" + chr(10) + "import android.content.IntentFilter;" + chr(10) + "import android.os.BatteryManager;" + chr(10) + "import android.net.ConnectivityManager;" + chr(10) + "import android.net.Network;" + chr(10) + "import android.net.NetworkCapabilities;", 1)
           old_commands = """                ControlAccessibilityService a = ControlAccessibilityService.INSTANCE;
                           if (a == null) return;
                           String type = j.optString("type");
