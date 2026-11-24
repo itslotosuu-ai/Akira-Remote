@@ -135,6 +135,7 @@ body.no-motion .radar-sweep{animation:none}
  <a class="nav-link active" href="#device-radar"><span class="nav-icon">⌂</span> OVERVIEW</a>
  <a class="nav-link" href="#controls"><span class="nav-icon">⌘</span> CONTROL DECK</a>
  <a class="nav-link" href="#pc-stream"><span class="nav-icon">▣</span> SCREEN BEAM</a>
+ <a class="nav-link" href="#file-transfer"><span class="nav-icon">⇄</span> FILE TRANSFER</a>
  <a class="nav-link" href="#appearance"><span class="nav-icon">◈</span> CUSTOMIZE</a>
  <div class="nav-foot">AKIRA CORE v2.0<br>LOCAL NETWORK<br>SYS.STATUS: READY</div>
 </nav>
@@ -312,6 +313,34 @@ window.addEventListener('beforeunload',()=>{if(frameUrl)URL.revokeObjectURL(fram
   $('themeAccent').dispatchEvent(new Event('input'));$('themeWall').dispatchEvent(new Event('input'));
   $('animationSpeed').dispatchEvent(new Event('input'));$('motionToggle').dispatchEvent(new Event('input'));$('glowToggle').dispatchEvent(new Event('input'));
   apply(defaults);$('appearanceStatus').textContent='DEFAULT PROFILE RESTORED';
+ };
+})();
+</script>
+
+
+<script>
+(()=>{
+ const $=id=>document.getElementById(id); let fileWs=null, pendingName="phone-file";
+ const set=(v)=>{$("fileStatus").textContent=v};
+ $("fileConnect").onclick=()=>{
+  const ip=$("filePhoneIp").value.trim().replace(/^ws:\/\//,'').replace(/:\\d+$/,'');
+  if(!ip){set("ERR:// PHONE IP REQUIRED");return}
+  try{fileWs=new WebSocket("ws://"+ip+":8767");fileWs.binaryType="arraybuffer"}catch(e){set("ERR:// INVALID ADDRESS");return}
+  set("HANDSHAKE // "+ip+":8767");
+  fileWs.onopen=()=>{set("FILE LINK ESTABLISHED // READY");$("fileSend").disabled=false};
+  fileWs.onclose=()=>{$("fileSend").disabled=true;set("FILE LINK CLOSED")};
+  fileWs.onerror=()=>set("ERR:// FILE LINK FAILED");
+  fileWs.onmessage=e=>{
+   if(typeof e.data==="string"){try{const m=JSON.parse(e.data);if(m.type==="file")pendingName=m.name||"phone-file"}catch(_){}return}
+   const blob=new Blob([e.data]);const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=pendingName;a.click();set("RECEIVED // "+pendingName);setTimeout(()=>URL.revokeObjectURL(url),1500);
+  };
+ };
+ $("fileSend").onclick=async()=>{
+  const f=$("transferFile").files[0];if(!f){set("ERR:// SELECT A FILE");return}
+  if(!fileWs||fileWs.readyState!==1){set("ERR:// FILE LINK OFFLINE");return}
+  fileWs.send(JSON.stringify({type:"file",name:f.name,size:f.size}));
+  const data=await f.arrayBuffer();fileWs.send(data);
+  $("fileMeter").style.width="100%";set("SENT // "+f.name+" • "+f.size+" BYTES");
  };
 })();
 </script>
