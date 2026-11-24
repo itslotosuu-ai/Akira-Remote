@@ -523,6 +523,14 @@ jobs:
                                   String net = caps == null ? "OFFLINE" : (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ? "WIFI" : "ONLINE");
                                   pong.put("network", net);
                                   conn.send(pong.toString());''', 1)
+          c = capture.read_text()
+          c = c.replace('''                        conn.send(pong.toString());''',
+              '''                        ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+                          Network active = cm == null ? null : cm.getActiveNetwork();
+                          NetworkCapabilities caps = (cm == null || active == null) ? null : cm.getNetworkCapabilities(active);
+                          String net = caps == null ? "OFFLINE" : (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ? "WIFI" : "ONLINE");
+                          pong.put("network", net);
+                          conn.send(pong.toString());''', 1)
           capture.write_text(c)
           PY
 
