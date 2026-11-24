@@ -153,7 +153,7 @@ public class MainActivity extends Activity {
         ipValue = text(getLocalIp(), 20, GREEN, true);
         ipValue.setTextIsSelectable(true);
         network.addView(ipValue);
-        network.addView(text("Один Wi-Fi для локального подключения. Удалённый SYNKRON LINK будет отдельным режимом.",10,MUTED,false), params(-1,-2,0,7,0,0));
+        network.addView(text("Один Wi-Fi для локального подключения SYNKRON.",10,MUTED,false), params(-1,-2,0,7,0,0));
         Button copy = button("COPY IP ADDRESS", false);
         network.addView(copy, params(-1,44,0,12,0,0));
         copy.setOnClickListener(v -> {
