@@ -1,14 +1,14 @@
 const { app, BrowserWindow, Menu, ipcMain, desktopCapturer } = require("electron");
 const path = require("path");
 
-ipcMain.handle("akira:get-screen-sources", async () => {\n  const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 320, height: 180 } });\n  return sources.map(source => ({ id: source.id, name: source.name }));\n});\n\nfunction createWindow() {
+ipcMain.handle("synkron:get-screen-sources", async () => {\n  const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 320, height: 180 } });\n  return sources.map(source => ({ id: source.id, name: source.name }));\n});\n\nfunction createWindow() {
   const win = new BrowserWindow({
     width: 1440,
     height: 920,
     minWidth: 900,
     minHeight: 650,
     backgroundColor: "#050907",
-    title: "AKIRA REMOTE // DESKTOP",
+    title: "synkron REMOTE // DESKTOP",
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),\n      contextIsolation: true,
