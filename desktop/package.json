@@ -38,14 +38,17 @@
             "x64"
           ]
         }
-      ],
-      "artifactName": "AKIRA-REMOTE-Desktop-${version}-${arch}.${ext}"
+      ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "artifactName": "AKIRA-REMOTE-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "AKIRA-REMOTE-Portable-${version}-${arch}.${ext}"
     }
   }
 }
