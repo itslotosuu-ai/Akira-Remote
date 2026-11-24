@@ -1,6 +1,6 @@
-# AKIRA LINK — signaling relay (phase 1)
+# SYNKRON LINK — signaling relay (phase 1)
 
-This service is the first server-side building block for cross-network AKIRA REMOTE connections. It brokers **WebRTC signaling only**; it does not carry screen video, remote-control commands, chat, or files yet.
+This service is the first server-side building block for cross-network SYNKRON connections. It brokers **WebRTC signaling only**; it does not carry screen video, remote-control commands, chat, or files yet.
 
 ## What it does
 
