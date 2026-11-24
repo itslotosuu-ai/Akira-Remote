@@ -141,7 +141,7 @@ final class RadarBackground extends Drawable {
         animator.start();
     }
     @Override public void draw(Canvas canvas) {
-        RectF b = getBounds();
+        RectF b = new RectF(getBounds());
         float cx = b.width() * 0.82f, cy = b.height() * 0.17f;
         float r = Math.min(b.width(), b.height()) * 0.30f;
         int save = canvas.save();
