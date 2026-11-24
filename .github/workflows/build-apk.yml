@@ -440,6 +440,21 @@ jobs:
                   uiHandler.removeCallbacks(pingTask);
                   if (client != null) client.close();''', 1)
           watch.write_text(s)
+          # Apply telemetry additions after all prior UI patches have completed.
+          w = watch.read_text()
+          w = w.replace('private String phoneBattery = "--", phoneTemp = "--", frameSize = "--";',
+              'private String phoneBattery = "--", phoneTemp = "--", phoneNetwork = "--", frameSize = "--";')
+          w = w.replace('phoneTemp = reply.optString("temp", "--");',
+              'phoneTemp = reply.optString("temp", "--");' + chr(10) + '                            phoneNetwork = reply.optString("network", "--");')
+          w = w.replace('" • TEMP " + phoneTemp + " • " + frameSize',
+              '" • TEMP " + phoneTemp + " • NET " + phoneNetwork + " • " + frameSize')
+          w = w.replace('        if (screen.getDrawable() == null) return null;',
+              '''        if (screen.getScaleType() == ImageView.ScaleType.FIT_XY) {
+                      return new float[]{clamp(viewX / Math.max(1f, screen.getWidth())),
+                          clamp(viewY / Math.max(1f, screen.getHeight()))};
+                  }
+                  if (screen.getDrawable() == null) return null;''', 1)
+          watch.write_text(w)
 
           service = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/ControlAccessibilityService.java")
           a = service.read_text()
@@ -494,6 +509,20 @@ jobs:
           if "if (\"ping\".equals(type))" not in c:
               if old_commands not in c: raise SystemExit("phone command handler anchor missing")
               c = c.replace(old_commands, new_commands, 1)
+          capture.write_text(c)
+          # Report active network transport alongside battery telemetry.
+          c = capture.read_text()
+          if "import android.net.ConnectivityManager;" not in c:
+              c = c.replace("import android.os.BatteryManager;", "import android.os.BatteryManager;" + chr(10) + "import android.net.ConnectivityManager;" + chr(10) + "import android.net.Network;" + chr(10) + "import android.net.NetworkCapabilities;", 1)
+          c = c.replace('''                                  pong.put("temp", temp < 0 ? "--" : String.format(java.util.Locale.US, "%.1fC", temp / 10f));
+                                  conn.send(pong.toString());''',
+              '''                                  pong.put("temp", temp < 0 ? "--" : String.format(java.util.Locale.US, "%.1fC", temp / 10f));
+                                  ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+                                  Network active = cm == null ? null : cm.getActiveNetwork();
+                                  NetworkCapabilities caps = (cm == null || active == null) ? null : cm.getNetworkCapabilities(active);
+                                  String net = caps == null ? "OFFLINE" : (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ? "WIFI" : "ONLINE");
+                                  pong.put("network", net);
+                                  conn.send(pong.toString());''', 1)
           capture.write_text(c)
           PY
 
