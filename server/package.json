@@ -1,8 +1,8 @@
 {
-  "name": "akira-link-relay",
+  "name": "synkron-link-relay",
   "version": "0.1.0",
   "private": true,
-  "description": "Ephemeral WebRTC signaling relay for AKIRA REMOTE",
+  "description": "Ephemeral WebRTC signaling relay for SYNKRON",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
