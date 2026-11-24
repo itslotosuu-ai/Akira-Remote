@@ -1,4 +1,4 @@
 const { contextBridge, ipcRenderer } = require("electron");
-contextBridge.exposeInMainWorld("akiraDesktop", {
-  getScreenSources: () => ipcRenderer.invoke("akira:get-screen-sources")
+contextBridge.exposeInMainWorld("synkronDesktop", {
+  getScreenSources: () => ipcRenderer.invoke("synkron:get-screen-sources")
 });
