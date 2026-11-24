@@ -1,9 +1,9 @@
 {
-  "name": "akira-remote-desktop",
+  "name": "synkron-desktop",
   "version": "1.0.0",
-  "description": "AKIRA REMOTE desktop screen viewer and controller",
+  "description": "SYNKRON Desktop desktop screen viewer and controller",
   "main": "main.js",
-  "author": "AKIRA REMOTE",
+  "author": "SYNKRON Desktop",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
@@ -15,7 +15,7 @@
   },
   "build": {
     "appId": "com.akira.remote.desktop",
-    "productName": "AKIRA REMOTE",
+    "productName": "SYNKRON Desktop",
     "directories": {
       "output": "dist"
     },
@@ -46,10 +46,10 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "artifactName": "AKIRA-REMOTE-Setup-${version}-${arch}.${ext}"
+      "artifactName": "SYNKRON-REMOTE-Setup-${version}-${arch}.${ext}"
     },
     "portable": {
-      "artifactName": "AKIRA-REMOTE-Portable-${version}-${arch}.${ext}"
+      "artifactName": "SYNKRON-REMOTE-Portable-${version}-${arch}.${ext}"
     }
   }
 }
