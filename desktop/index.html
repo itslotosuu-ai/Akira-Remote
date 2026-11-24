@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AKIRA REMOTE // DESKTOP</title>
+<style>
+:root{color-scheme:dark;--green:#39ff88;--muted:#168a50;--panel:#07130c;--line:#164b2c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#10251a 0,#050907 55%);color:#d7ffe5;font:14px ui-monospace,SFMono-Regular,Consolas,monospace;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line);background:#050907cc}
+.brand{color:var(--green);font-size:20px;font-weight:800;letter-spacing:2px}.sub{color:var(--muted);font-size:11px;margin-top:5px}
+main{max-width:1250px;margin:24px auto;padding:0 18px;display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px}
+.panel{background:#08120cdd;border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 10px 40px #0008}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}.toolbar input{flex:1;min-width:180px;background:#020604;border:1px solid var(--muted);color:var(--green);padding:12px;border-radius:7px;font:inherit;outline:none}
+button{background:#10251a;border:1px solid var(--muted);color:var(--green);padding:11px 14px;border-radius:7px;font:inherit;font-weight:bold;cursor:pointer}button:hover{background:#17432a}button:disabled{opacity:.4;cursor:not-allowed}
+#status{color:var(--muted);font-size:12px;margin:12px 0}.screen-wrap{height:min(72vh,760px);min-height:300px;background:#020403;border:1px solid #123b23;border-radius:9px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+#screen{max-width:100%;max-height:100%;object-fit:contain;display:none;user-select:none;-webkit-user-drag:none;touch-action:none}#placeholder{color:#168a50;text-align:center;line-height:2}
+.side h3{color:var(--green);font-size:13px;margin:0 0 12px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions button{padding:14px 8px}.hint{font-size:11px;line-height:1.8;color:#70a986;margin-top:18px}.log{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:#168a50;line-height:1.7;margin-top:16px}
+@media(max-width:850px){main{grid-template-columns:1fr}.screen-wrap{height:60vh}.side{order:-1}}
+</style>
+</head>
+<body>
+<header><div><div class="brand">AKIRA // REMOTE</div><div class="sub">DESKTOP CONSOLE • WEBSOCKET LINK • PORT 8765</div></div><div class="sub">LOCAL CONTROL INTERFACE</div></header>
+<main>
+<section class="panel">
+ <div class="toolbar"><input id="ip" placeholder="IP телефона, например 192.168.1.25" autocomplete="off"><button id="connect">CONNECT</button><button id="disconnect" disabled>DISCONNECT</button></div>
+ <div id="status">SYS:// STANDBY — запусти трансляцию на телефоне и введи его IP</div>
+ <div class="screen-wrap" id="viewport"><div id="placeholder">WAITING FOR VIDEO STREAM<br>PHONE → DESKTOP</div><img id="screen" alt="Экран телефона"></div>
+</section>
+<aside class="panel side">
+ <h3>CONTROL DECK</h3>
+ <div class="actions"><button data-cmd="back">← BACK</button><button data-cmd="home">⌂ HOME</button><button data-cmd="stop">■ STOP STREAM</button><button id="fullscreen">⛶ FULLSCREEN</button></div>
+ <div class="hint">• Телефон и ПК должны быть в одной Wi‑Fi сети.<br>• На телефоне нажми START SCREEN STREAM.<br>• Клик по изображению отправляет касание.<br>• Зажми и перетащи мышь, чтобы отправить свайп.<br>• Для управления может потребоваться включить службу специальных возможностей на телефоне.</div>
+ <div class="log" id="log">LOG:// CLIENT READY</div>
+</aside>
+</main>
+<script>
+const $=id=>document.getElementById(id);let ws=null,frameUrl=null,pointer=null;
+function status(s){$('status').textContent=s}
+function log(s){$('log').textContent=('> '+s+'\n'+$('log').textContent).split('\n').slice(0,5).join('\n')}
+function send(obj){if(ws&&ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(obj));else log('COMMAND BLOCKED: OFFLINE')}
+function connect(){
+ let ip=$('ip').value.trim().replace(/^ws:\/\//,'').replace(/:\d+$/,'');
+ if(!ip){status('ERR:// PHONE IP REQUIRED');return}
+ try{ws=new WebSocket('ws://'+ip+':8765');ws.binaryType='arraybuffer'}catch(e){status('ERR:// INVALID ADDRESS');return}
+ status('HANDSHAKE // '+ip+':8765');$('connect').disabled=true;
+ ws.onopen=()=>{status('LINK ESTABLISHED // RECEIVING VIDEO');$('disconnect').disabled=false;log('SOCKET CONNECTED')};
+ ws.onmessage=e=>{
+  if(typeof e.data==='string'){try{const m=JSON.parse(e.data);if(m.type==='pong')log('PHONE ONLINE')}catch(_){}return}
+  const blob=e.data instanceof Blob?e.data:new Blob([e.data],{type:'image/jpeg'});
+  if(frameUrl)URL.revokeObjectURL(frameUrl);frameUrl=URL.createObjectURL(blob);$('screen').src=frameUrl;$('screen').style.display='block';$('placeholder').style.display='none';
+ };
+ ws.onerror=()=>{status('ERR:// CONNECTION FAILED — проверь IP, Wi‑Fi и порт 8765');log('SOCKET ERROR')};
+ ws.onclose=()=>{status('LINK LOST // IDLE');$('connect').disabled=false;$('disconnect').disabled=true;log('SOCKET CLOSED')};
+}
+function disconnect(){if(ws){ws.close();ws=null}}
+$('connect').onclick=connect;$('disconnect').onclick=disconnect;
+$('ip').addEventListener('keydown',e=>{if(e.key==='Enter')connect()});
+document.querySelectorAll('[data-cmd]').forEach(b=>b.onclick=()=>{send({type:b.dataset.cmd});log('CMD // '+b.dataset.cmd.toUpperCase())});
+$('fullscreen').onclick=()=>{const v=$('viewport');if(!document.fullscreenElement)v.requestFullscreen?.();else document.exitFullscreen?.()};
+function coords(e){const r=$('screen').getBoundingClientRect();const iw=$('screen').naturalWidth,ih=$('screen').naturalHeight;if(!iw||!ih)return null;const scale=Math.min(r.width/iw,r.height/ih),w=iw*scale,h=ih*scale,left=r.left+(r.width-w)/2,top=r.top+(r.height-h)/2;const x=(e.clientX-left)/w,y=(e.clientY-top)/h;if(x<0||x>1||y<0||y>1)return null;return{x,y}}
+$('screen').addEventListener('pointerdown',e=>{if(!ws||ws.readyState!==1)return;const p=coords(e);if(!p)return;pointer={...p,t:Date.now(),id:e.pointerId};$('screen').setPointerCapture(e.pointerId)});
+$('screen').addEventListener('pointerup',e=>{if(!pointer)return;const p=coords(e);if(p){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.hypot(dx,dy)<.025)send({type:'tap',x:pointer.x,y:pointer.y});else send({type:'swipe',x1:pointer.x,y1:pointer.y,x2:p.x,y2:p.y,duration:Math.max(100,Math.min(900,Date.now()-pointer.t))});}pointer=null});
+window.addEventListener('beforeunload',()=>{if(frameUrl)URL.revokeObjectURL(frameUrl);if(ws)ws.close()});
+</script>
+</body></html>
