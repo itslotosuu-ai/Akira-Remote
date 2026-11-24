@@ -493,3 +493,4 @@ jobs:
           path: |
             source/AKIRA_REMOTE/phone/build/outputs/apk/debug/*.apk
             source/AKIRA_REMOTE/watch/build/outputs/apk/debug/*.apk
+# Rebuild after radar background compile fix
