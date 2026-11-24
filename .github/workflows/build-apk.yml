@@ -276,6 +276,193 @@ jobs:
               p.write_text(s)
           PY
 
+      - name: Add HUD, touchpad shortcuts, telemetry and system log
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          watch = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
+          s = watch.read_text()
+          s = s.replace("import android.os.Bundle;", "import android.os.Bundle;\nimport android.os.Handler;\nimport android.os.Looper;")
+          s = s.replace("    private final AtomicReference<android.graphics.Bitmap> latest = new AtomicReference<>();", """    private final AtomicReference<android.graphics.Bitmap> latest = new AtomicReference<>();
+              private TextView hud, log;
+              private final Handler uiHandler = new Handler(Looper.getMainLooper());
+              private long pingStartedAt, lastRtt = -1, fpsWindowStart = System.currentTimeMillis();
+              private int frameCounter, currentFps;
+              private String phoneBattery = "--", phoneTemp = "--", frameSize = "--";
+              private final Runnable pingTask = new Runnable() {
+                  @Override public void run() {
+                      if (client != null && client.isOpen()) {
+                          try {
+                              pingStartedAt = System.currentTimeMillis();
+                              JSONObject ping = new JSONObject();
+                              ping.put("type", "ping");
+                              client.send(ping.toString());
+                          } catch (Exception ignored) {}
+                          uiHandler.postDelayed(this, 2500);
+                      }
+                  }
+              };""")
+          s = s.replace('''        root.addView(status, new LinearLayout.LayoutParams(-1, 24));
+          screen = new ImageView(this);''', '''        root.addView(status, new LinearLayout.LayoutParams(-1, 24));
+                  hud = new TextView(this);
+                  hud.setText("HUD:// WAITING FOR TELEMETRY");
+                  hud.setTextColor(0xFFB8FFD0);
+                  hud.setTextSize(9);
+                  hud.setGravity(Gravity.CENTER);
+                  hud.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
+                  hud.setBackgroundColor(0xFF07130C);
+                  root.addView(hud, new LinearLayout.LayoutParams(-1, 25));
+          screen = new ImageView(this);''')
+          s = s.replace('''        setContentView(root);
+
+          connect.setOnClickListener''', '''        LinearLayout quick = new LinearLayout(this);
+                  quick.setOrientation(LinearLayout.HORIZONTAL);
+                  quick.setGravity(Gravity.CENTER);
+                  String[] quickLabels = {"< BACK", "^ HOME", "RELINK"};
+                  String[] quickTypes = {"back", "home", "relink"};
+                  for (int q = 0; q < quickLabels.length; q++) {
+                      final String action = quickTypes[q];
+                      Button command = new Button(this);
+                      command.setText(quickLabels[q]);
+                      command.setTextSize(9);
+                      command.setTextColor(0xFF39FF88);
+                      command.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
+                      command.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF10251A));
+                      LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(0, 34, 1f);
+                      cp.setMargins(2, 2, 2, 2);
+                      quick.addView(command, cp);
+                      command.setOnClickListener(v -> {
+                          if ("relink".equals(action)) connect();
+                          else sendCommand(action);
+                      });
+                  }
+                  root.addView(quick, new LinearLayout.LayoutParams(-1, 36));
+                  log = new TextView(this);
+                  log.setText("LOG:// SYSTEM INITIALIZED");
+                  log.setTextColor(0xFF168A50);
+                  log.setTextSize(8);
+                  log.setTypeface(android.graphics.Typeface.MONOSPACE);
+                  log.setMaxLines(2);
+                  root.addView(log, new LinearLayout.LayoutParams(-1, 28));
+                  setContentView(root);
+
+          connect.setOnClickListener''')
+          s = s.replace('''                @Override public void onOpen(ServerHandshake h) { runOnUiThread(() -> status.setText("LINK ESTABLISHED // RX")); }
+                  @Override public void onMessage(String m) {}
+                  @Override public void onMessage(java.nio.ByteBuffer bytes) {''', '''                @Override public void onOpen(ServerHandshake h) {
+                              runOnUiThread(() -> { status.setText("LINK ESTABLISHED // RX"); appendLog("LINK ESTABLISHED"); updateHud(); });
+                              uiHandler.removeCallbacks(pingTask);
+                              uiHandler.post(pingTask);
+                          }
+                          @Override public void onMessage(String m) {
+                              try {
+                                  JSONObject reply = new JSONObject(m);
+                                  if ("pong".equals(reply.optString("type"))) {
+                                      lastRtt = System.currentTimeMillis() - pingStartedAt;
+                                      phoneBattery = reply.optString("battery", "--");
+                                      phoneTemp = reply.optString("temp", "--");
+                                      runOnUiThread(() -> updateHud());
+                                  }
+                              } catch (Exception ignored) {}
+                          }
+                  @Override public void onMessage(java.nio.ByteBuffer bytes) {''')
+          s = s.replace('''                    if (bmp != null) runOnUiThread(() -> screen.setImageBitmap(bmp));
+                  }
+                  @Override public void onClose(int c, String r, boolean remote) { runOnUiThread(() -> status.setText("LINK LOST // IDLE")); }
+                  @Override public void onError(Exception e) { runOnUiThread(() -> status.setText("ERR:// CONNECTION FAILED")); }''', '''                    if (bmp != null) runOnUiThread(() -> {
+                                  screen.setImageBitmap(bmp);
+                                  frameSize = bmp.getWidth() + "x" + bmp.getHeight();
+                                  frameCounter++;
+                                  long now = System.currentTimeMillis();
+                                  if (now - fpsWindowStart >= 1000) {
+                                      currentFps = frameCounter;
+                                      frameCounter = 0;
+                                      fpsWindowStart = now;
+                                  }
+                                  updateHud();
+                              });
+                  }
+                  @Override public void onClose(int c, String r, boolean remote) {
+                              uiHandler.removeCallbacks(pingTask);
+                              runOnUiThread(() -> { status.setText("LINK LOST // IDLE"); appendLog("LINK CLOSED"); });
+                          }
+                  @Override public void onError(Exception e) {
+                              runOnUiThread(() -> { status.setText("ERR:// CONNECTION FAILED"); appendLog("ERR: SOCKET"); });
+                          }''')
+          s = s.replace('''            client.connect();
+              status.setText("HANDSHAKE // TCP 8765…");''', '''            client.connect();
+                      appendLog("HANDSHAKE STARTED");
+              status.setText("HANDSHAKE // TCP 8765…");''')
+          s = s.replace('''    @Override protected void onDestroy() {
+              if (client != null) client.close();''', '''    private void sendCommand(String type) {
+                  if (client == null || !client.isOpen()) { appendLog("COMMAND BLOCKED: OFFLINE"); return; }
+                  try {
+                      JSONObject command = new JSONObject();
+                      command.put("type", type);
+                      client.send(command.toString());
+                      appendLog("CMD // " + type.toUpperCase());
+                  } catch (Exception ignored) {}
+              }
+              private void appendLog(String event) {
+                  if (log == null) return;
+                  String old = log.getText().toString();
+                  String[] lines = (old + "\\n> " + event).split("\\n");
+                  StringBuilder recent = new StringBuilder();
+                  for (int i = Math.max(0, lines.length - 2); i < lines.length; i++) {
+                      if (recent.length() > 0) recent.append("\\n");
+                      recent.append(lines[i]);
+                  }
+                  log.setText(recent.toString());
+              }
+              private void updateHud() {
+                  if (hud == null) return;
+                  String rtt = lastRtt < 0 ? "--" : lastRtt + "ms";
+                  hud.setText("FPS " + currentFps + "  •  RTT " + rtt + "  •  BAT " + phoneBattery
+                      + "  •  TEMP " + phoneTemp + "  •  " + frameSize);
+              }
+              @Override protected void onDestroy() {
+                  uiHandler.removeCallbacks(pingTask);
+              if (client != null) client.close();''')
+          watch.write_text(s)
+
+          service = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/ControlAccessibilityService.java")
+          a = service.read_text()
+          if "public void goBack()" not in a:
+              a = a.replace("    public void tap(float nx, float ny)", """    public void goBack() { performGlobalAction(GLOBAL_ACTION_BACK); }
+              public void goHome() { performGlobalAction(GLOBAL_ACTION_HOME); }
+              public void tap(float nx, float ny)""")
+          service.write_text(a)
+
+          capture = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/CaptureService.java")
+          c = capture.read_text()
+          old_handler = '''                String type = j.optString("type");
+                          if ("tap".equals(type)) a.tap'''
+          new_handler = '''                String type = j.optString("type");
+                          if ("ping".equals(type)) {
+                              try {
+                                  Intent battery = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+                                  int level = battery == null ? -1 : battery.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                                  int scale = battery == null ? 100 : battery.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+                                  int temp = battery == null ? -1 : battery.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);
+                                  JSONObject pong = new JSONObject();
+                                  pong.put("type", "pong");
+                                  pong.put("battery", level < 0 ? "--" : Math.round(level * 100f / Math.max(1, scale)) + "%");
+                                  pong.put("temp", temp < 0 ? "--" : String.format(java.util.Locale.US, "%.1fC", temp / 10f));
+                                  conn.send(pong.toString());
+                              } catch (Exception ignored) {}
+                              return;
+                          }
+                          if ("tap".equals(type)) a.tap'''
+          if old_handler not in c:
+              raise SystemExit("Could not locate remote command handler")
+          c = c.replace(old_handler, new_handler, 1)
+          c = c.replace('''                else if ("swipe".equals(type)) a.swipe''', '''                else if ("back".equals(type)) a.goBack();
+                          else if ("home".equals(type)) a.goHome();
+                          else if ("swipe".equals(type)) a.swipe''', 1)
+          c = c.replace("import android.app.*;", "import android.app.*;\nimport android.content.IntentFilter;\nimport android.os.BatteryManager;")
+          capture.write_text(c)
+          PY
+
       - name: Upload patched source for inspection
         uses: actions/upload-artifact@v4
         with:
