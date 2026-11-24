@@ -26,6 +26,19 @@ jobs:
       - name: Extract source
         run: unzip -q AKIRA_REMOTE_source.zip -d source
 
+      - name: Inspect phone transfer server sources
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote")
+          for p in sorted(root.glob("*.java")):
+              print("\\n===== SOURCE FILE:", p.name, "=====")
+              if p.name in ("CaptureService.java", "RemoteServer.java"):
+                  print(p.read_text())
+              else:
+                  print("FILE PRESENT")
+          PY
+
       - name: Apply redesigned phone interface
         run: cp phone/MainActivity.java source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/MainActivity.java
 
