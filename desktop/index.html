@@ -270,18 +270,18 @@ window.addEventListener('beforeunload',()=>{if(frameUrl)URL.revokeObjectURL(fram
  }
  function read(){return {themeAccent:document.getElementById('themeAccent').value,themeWall:document.getElementById('themeWall').value,animationSpeed:document.getElementById('animationSpeed').value,motionToggle:document.getElementById('motionToggle').checked,glowToggle:document.getElementById('glowToggle').checked}}
  let saved=defaults;
- try{saved={...defaults,...JSON.parse(localStorage.getItem('akira-appearance')||'{}')}}catch(_){}
+ try{saved={...defaults,...JSON.parse(localStorage.getItem('synkron-appearance')||'{}')}}catch(_){}
  apply(saved);
  ids.forEach(id=>document.getElementById(id).addEventListener('input',()=>{apply(read());document.getElementById('appearanceStatus').textContent='PREVIEW MODE // NOT SAVED'}));
- document.getElementById('saveAppearance').onclick=()=>{const v=read();localStorage.setItem('akira-appearance',JSON.stringify(v));document.getElementById('appearanceStatus').textContent='PROFILE SAVED // LOCAL DEVICE';};
- document.getElementById('resetAppearance').onclick=()=>{localStorage.removeItem('akira-appearance');apply(defaults);document.getElementById('appearanceStatus').textContent='DEFAULT PROFILE RESTORED';};
+ document.getElementById('saveAppearance').onclick=()=>{const v=read();localStorage.setItem('synkron-appearance',JSON.stringify(v));document.getElementById('appearanceStatus').textContent='PROFILE SAVED // LOCAL DEVICE';};
+ document.getElementById('resetAppearance').onclick=()=>{localStorage.removeItem('synkron-appearance');apply(defaults);document.getElementById('appearanceStatus').textContent='DEFAULT PROFILE RESTORED';};
 })();
 </script>
 
 
 <script>
 (()=> {
- const key='akira-appearance';
+ const key='synkron-appearance';
  const defaults={glassOpacity:72,glassBlur:14,hudSpeed:100};
  const $=id=>document.getElementById(id);
  let saved={...defaults};
