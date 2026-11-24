@@ -1,5 +1,8 @@
 name: Build SYNKRON Mobile APKs
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -579,6 +582,24 @@ jobs:
         run: |
           cd source/AKIRA_REMOTE
           gradle assembleDebug
+
+      - name: Prepare standalone release APKs
+        run: |
+          mkdir -p release
+          cp source/AKIRA_REMOTE/phone/build/outputs/apk/debug/*.apk release/SYNKRON-Mobile.apk
+          cp source/AKIRA_REMOTE/watch/build/outputs/apk/debug/*.apk release/SYNKRON-Watch.apk
+
+      - name: Publish direct APK downloads
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mobile-latest
+          name: SYNKRON Mobile — latest
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: |
+            release/SYNKRON-Mobile.apk
+            release/SYNKRON-Watch.apk
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
