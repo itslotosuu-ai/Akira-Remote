@@ -33,10 +33,9 @@ test("health endpoint and two-peer signaling relay", async t => {
   const connect = role => new WebSocket(`ws://127.0.0.1:${port}/v1/signal?room=${room}&role=${role}`);
   const phone = connect("phone");
   const desktop = connect("desktop");
-  await Promise.all([once(phone, "open"), once(desktop, "open")]);
-
   const phoneReady = once(phone, "message");
   const desktopReady = once(desktop, "message");
+  await Promise.all([once(phone, "open"), once(desktop, "open")]);
   const [pReady, dReady] = await Promise.all([phoneReady, desktopReady]);
   assert.equal(JSON.parse(pReady[0].toString()).type, "ready");
   assert.equal(JSON.parse(dReady[0].toString()).type, "ready");
