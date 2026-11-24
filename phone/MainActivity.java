@@ -75,14 +75,14 @@ public class MainActivity extends Activity {
         // HEADER / BRAND
         LinearLayout top = new LinearLayout(this);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView logo = text("A", 25, GREEN, true);
+        TextView logo = text("S", 25, GREEN, true);
         logo.setGravity(Gravity.CENTER);
         logo.setBackground(rounded(0xFF0B2416, 16, GREEN));
         top.addView(logo, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout brand = new LinearLayout(this);
         brand.setOrientation(LinearLayout.VERTICAL);
         brand.setPadding(dp(11), 0, 0, 0);
-        brand.addView(text("AKIRA", 21, 0xFFE8FFF0, true));
+        brand.addView(text("SYNKRON", 21, 0xFFE8FFF0, true));
         brand.addView(text("REMOTE  /  CONTROL NODE", 9, MUTED, true));
         top.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
         TextView live = text("● SYSTEM READY", 9, GREEN, true);
@@ -93,7 +93,7 @@ public class MainActivity extends Activity {
         page.addView(text("PERSONAL REMOTE CONTROL SYSTEM", 9, MUTED, true), params(-1,-2,0,18,0,8));
 
         // CENTRAL REACTOR
-        LinearLayout reactorCard = card(page, "AKIRA CORE", "MAINFRAME  //  DEVICE CONTROL");
+        LinearLayout reactorCard = card(page, "SYNK CORE", "MAINFRAME  //  DEVICE CONTROL");
         CoreReactorView core = new CoreReactorView(this);
         reactorCard.addView(core, params(-1, 190, 0, 0, 0, 8));
         LinearLayout coreStats = new LinearLayout(this);
@@ -148,12 +148,12 @@ public class MainActivity extends Activity {
         ipValue = text(getLocalIp(), 20, GREEN, true);
         ipValue.setTextIsSelectable(true);
         network.addView(ipValue);
-        network.addView(text("Один Wi-Fi для локального подключения. Удалённый AKIRA LINK будет отдельным режимом.",10,MUTED,false), params(-1,-2,0,7,0,0));
+        network.addView(text("Один Wi-Fi для локального подключения. Удалённый SYNKRON LINK будет отдельным режимом.",10,MUTED,false), params(-1,-2,0,7,0,0));
         Button copy = button("COPY IP ADDRESS", false);
         network.addView(copy, params(-1,44,0,12,0,0));
         copy.setOnClickListener(v -> {
             ClipboardManager cm=(ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
-            cm.setPrimaryClip(ClipData.newPlainText("AKIRA phone IP",getLocalIp()));
+            cm.setPrimaryClip(ClipData.newPlainText("SYNKRON phone IP",getLocalIp()));
             Toast.makeText(this,"IP скопирован",Toast.LENGTH_SHORT).show();
         });
 
@@ -168,7 +168,7 @@ public class MainActivity extends Activity {
             pick.setType("*/*"); pick.addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(pick, REQUEST_FILE_PICK);
         });
-        files.addView(text("Incoming files are saved in the app's AKIRA-Received folder. Keep this app open during transfer.",10,MUTED,false));
+        files.addView(text("Incoming files are saved in the app's SYNKRON-Received folder. Keep this app open during transfer.",10,MUTED,false));
 
         // WINDOWS SCREEN RECEIVER
         LinearLayout pcMirror = card(page, "PC SCREEN BEAM", "WINDOWS → PHONE  //  INCOMING DISPLAY");
@@ -181,10 +181,10 @@ public class MainActivity extends Activity {
         pcMirror.addView(text("Запусти PC → PHONE stream в Windows-клиенте. Оба устройства должны быть в одной Wi-Fi сети.",10,MUTED,false));
 
         LinearLayout guide = card(page, "QUICK START", "INITIALIZATION  //  3 STEPS");
-        guide.addView(step("01","Разреши службу управления","Включи AKIRA Remote в настройках специальных возможностей."));
+        guide.addView(step("01","Разреши службу управления","Включи SYNKRON Remote в настройках специальных возможностей."));
         guide.addView(step("02","Запусти трансляцию","Подтверди системный запрос Android на захват экрана."));
         guide.addView(step("03","Подключи часы","Введи IP телефона в приложении на часах."));
-        TextView footer = text("AKIRA SYSTEMS  •  SECURE LOCAL SESSION", 9, MUTED, true);
+        TextView footer = text("SYNKRON SYSTEMS  •  SECURE LOCAL SESSION", 9, MUTED, true);
         footer.setGravity(Gravity.CENTER);
         footer.setPadding(0,dp(16),0,dp(8));
         page.addView(footer);
@@ -270,11 +270,11 @@ public class MainActivity extends Activity {
         @Override public void onMessage(WebSocket conn, ByteBuffer bytes) {
             try {
                 ByteBuffer copy = bytes.slice(); byte[] data = new byte[copy.remaining()]; copy.get(data);
-                File dir = new File(getExternalFilesDir(null), "AKIRA-Received"); if (!dir.exists()) dir.mkdirs();
+                File dir = new File(getExternalFilesDir(null), "SYNKRON-Received"); if (!dir.exists()) dir.mkdirs();
                 File out = new File(dir, incomingName);
                 try (FileOutputStream stream = new FileOutputStream(out)) { stream.write(data); }
                 String saved = out.getName();
-                runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("● ПОЛУЧЕНО: " + saved + "  //  AKIRA-Received"); });
+                runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("● ПОЛУЧЕНО: " + saved + "  //  SYNKRON-Received"); });
             } catch (Exception e) {
                 runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("ERR:// SAVE FAILED"); });
             }
@@ -402,7 +402,7 @@ final class CoreReactorView extends View {
         p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1*density);p.setColor(0xFF39FF88);c.drawCircle(cx,cy,r*.47f,p);
         p.setStyle(Paint.Style.FILL);p.setColor(0xFFE5FFEC);p.setTextAlign(Paint.Align.CENTER);
         p.setTypeface(Typeface.create("sans-serif-monospace",Typeface.BOLD));p.setTextSize(13*density);
-        c.drawText("AKIRA CORE",cx,cy-2*density,p);
+        c.drawText("SYNK CORE",cx,cy-2*density,p);
         p.setColor(0xFF39FF88);p.setTextSize(8*density);c.drawText("NODE // ACTIVE",cx,cy+15*density,p);
         p.setTextAlign(Paint.Align.LEFT);
     }
