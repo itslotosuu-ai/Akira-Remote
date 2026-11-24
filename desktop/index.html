@@ -17,6 +17,28 @@ button{background:#10251a;border:1px solid var(--muted);color:var(--green);paddi
 #screen{max-width:100%;max-height:100%;object-fit:contain;display:none;user-select:none;-webkit-user-drag:none;touch-action:none}#placeholder{color:#168a50;text-align:center;line-height:2}
 .side h3{color:var(--green);font-size:13px;margin:0 0 12px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions button{padding:14px 8px}.hint{font-size:11px;line-height:1.8;color:#70a986;margin-top:18px}.log{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:#168a50;line-height:1.7;margin-top:16px}
 @media(max-width:850px){main{grid-template-columns:1fr}.screen-wrap{height:60vh}.side{order:-1}}
+
+/* PERSONALIZATION PANEL */
+.settings{margin-top:18px;padding-top:15px;border-top:1px solid var(--line)}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.setting{display:flex;flex-direction:column;gap:6px;color:#70a986;font-size:10px}
+.setting select,.setting input[type=range]{width:100%;accent-color:var(--green)}
+.setting select{background:#020604;border:1px solid var(--muted);border-radius:6px;color:var(--green);padding:8px;font:inherit}
+.setting-wide{grid-column:1/-1}
+.setting-check{display:flex;align-items:center;gap:8px;color:#70a986;font-size:11px}
+.setting-check input{accent-color:var(--green)}
+.settings-actions{display:flex;gap:8px;margin-top:10px}
+.settings-actions button{flex:1;padding:8px;font-size:10px}
+body.no-motion:before,body.no-motion:after{animation:none!important}
+body.no-motion *,body.no-motion *:before,body.no-motion *:after{animation:none!important;transition:none!important}
+body.soft-glow .panel{box-shadow:0 8px 28px #0007}
+body.soft-glow .brand,body.soft-glow #status{ text-shadow:none }
+body[data-wall="plain"]{background:#050907}
+body[data-wall="blue"]{background:radial-gradient(ellipse at 50% 0%,#102033 0,#05070b 58%)}
+body[data-wall="violet"]{background:radial-gradient(ellipse at 50% 0%,#211333 0,#08060b 58%)}
+body[data-wall="amber"]{background:radial-gradient(ellipse at 50% 0%,#30200e 0,#090704 58%)}
+body[data-wall="plain"]:before,body[data-wall="plain"]:after{opacity:0}
+
 </style>
 </head>
 <body>
@@ -30,6 +52,26 @@ button{background:#10251a;border:1px solid var(--muted);color:var(--green);paddi
 <aside class="panel side">
  <h3>CONTROL DECK</h3>
  <div class="actions"><button data-cmd="back">← BACK</button><button data-cmd="home">⌂ HOME</button><button data-cmd="stop">■ STOP STREAM</button><button id="fullscreen">⛶ FULLSCREEN</button></div>
+ 
+ <div class="settings">
+  <h3>INTERFACE CUSTOMIZER</h3>
+  <div class="settings-grid">
+   <label class="setting">ACCENT COLOR
+    <select id="themeAccent"><option value="green">NEON GREEN</option><option value="cyan">CYAN</option><option value="purple">VIOLET</option><option value="amber">AMBER</option><option value="red">RED</option></select>
+   </label>
+   <label class="setting">BACKGROUND
+    <select id="themeWall"><option value="default">CYBER GRID</option><option value="plain">CLEAN DARK</option><option value="blue">DEEP BLUE</option><option value="violet">VIOLET CORE</option><option value="amber">AMBER CORE</option></select>
+   </label>
+   <label class="setting setting-wide">ANIMATION SPEED <span id="speedValue">100%</span>
+    <input id="animationSpeed" type="range" min="25" max="200" step="25" value="100">
+   </label>
+   <label class="setting-check"><input id="motionToggle" type="checkbox" checked> ENABLE ANIMATIONS</label>
+   <label class="setting-check"><input id="glowToggle" type="checkbox" checked> NEON GLOW</label>
+  </div>
+  <div class="settings-actions"><button id="saveAppearance">SAVE LOOK</button><button id="resetAppearance">RESET</button></div>
+  <div class="sub" id="appearanceStatus">LOCAL PROFILE // READY</div>
+ </div>
+
  <div class="hint">• Телефон и ПК должны быть в одной Wi‑Fi сети.<br>• На телефоне нажми START SCREEN STREAM.<br>• Клик по изображению отправляет касание.<br>• Зажми и перетащи мышь, чтобы отправить свайп.<br>• Для управления может потребоваться включить службу специальных возможностей на телефоне.</div>
  <div class="log" id="log">LOG:// CLIENT READY</div>
 </aside>
@@ -63,4 +105,51 @@ $('screen').addEventListener('pointerdown',e=>{if(!ws||ws.readyState!==1)return;
 $('screen').addEventListener('pointerup',e=>{if(!pointer)return;const p=coords(e);if(p){const dx=p.x-pointer.x,dy=p.y-pointer.y;if(Math.hypot(dx,dy)<.025)send({type:'tap',x:pointer.x,y:pointer.y});else send({type:'swipe',x1:pointer.x,y1:pointer.y,x2:p.x,y2:p.y,duration:Math.max(100,Math.min(900,Date.now()-pointer.t))});}pointer=null});
 window.addEventListener('beforeunload',()=>{if(frameUrl)URL.revokeObjectURL(frameUrl);if(ws)ws.close()});
 </script>
+
+<script>
+(()=>{
+ const palettes={
+  green:{green:'#39ff88',muted:'#168a50',line:'#164b2c',panel:'#07130c'},
+  cyan:{green:'#42e8ff',muted:'#168ca0',line:'#14505b',panel:'#071218'},
+  purple:{green:'#c18aff',muted:'#8050b5',line:'#493064',panel:'#110b19'},
+  amber:{green:'#ffc45c',muted:'#a87527',line:'#61451c',panel:'#171006'},
+  red:{green:'#ff657a',muted:'#a83c4c',line:'#5b202d',panel:'#18090d'}
+ };
+ const ids=['themeAccent','themeWall','animationSpeed','motionToggle','glowToggle'];
+ const defaults={themeAccent:'green',themeWall:'default',animationSpeed:'100',motionToggle:true,glowToggle:true};
+ function apply(v){
+  const p=palettes[v.themeAccent]||palettes.green;
+  const root=document.documentElement;
+  root.style.setProperty('--green',p.green);
+  root.style.setProperty('--muted',p.muted);
+  root.style.setProperty('--line',p.line);
+  root.style.setProperty('--panel',p.panel);
+  document.body.dataset.wall=v.themeWall;
+  document.body.classList.toggle('no-motion',!v.motionToggle);
+  document.body.classList.toggle('soft-glow',!v.glowToggle);
+  const speed=Math.max(25,Math.min(200,Number(v.animationSpeed)||100));
+  document.getElementById('speedValue').textContent=speed+'%';
+  const factor=100/speed;
+  document.body.style.setProperty('--animation-factor',factor);
+  document.querySelectorAll('*').forEach(el=>{
+   const a=getComputedStyle(el).animationDuration;
+   if(a&&a!=='0s'&&!el.dataset.originalDuration)el.dataset.originalDuration=a;
+   if(el.dataset.originalDuration){
+    const n=parseFloat(el.dataset.originalDuration);
+    const unit=el.dataset.originalDuration.replace(/[0-9.]/g,'')||'s';
+    el.style.animationDuration=(n*factor)+unit;
+   }
+  });
+  ids.forEach(id=>{const el=document.getElementById(id);if(el){if(el.type==='checkbox')el.checked=!!v[id];else el.value=v[id]}});
+ }
+ function read(){return {themeAccent:document.getElementById('themeAccent').value,themeWall:document.getElementById('themeWall').value,animationSpeed:document.getElementById('animationSpeed').value,motionToggle:document.getElementById('motionToggle').checked,glowToggle:document.getElementById('glowToggle').checked}}
+ let saved=defaults;
+ try{saved={...defaults,...JSON.parse(localStorage.getItem('akira-appearance')||'{}')}}catch(_){}
+ apply(saved);
+ ids.forEach(id=>document.getElementById(id).addEventListener('input',()=>{apply(read());document.getElementById('appearanceStatus').textContent='PREVIEW MODE // NOT SAVED'}));
+ document.getElementById('saveAppearance').onclick=()=>{const v=read();localStorage.setItem('akira-appearance',JSON.stringify(v));document.getElementById('appearanceStatus').textContent='PROFILE SAVED // LOCAL DEVICE';};
+ document.getElementById('resetAppearance').onclick=()=>{localStorage.removeItem('akira-appearance');apply(defaults);document.getElementById('appearanceStatus').textContent='DEFAULT PROFILE RESTORED';};
+})();
+</script>
+
 </body></html>
