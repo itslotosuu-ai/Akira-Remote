@@ -214,80 +214,17 @@ jobs:
           from pathlib import Path
           p = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/MainActivity.java")
           s = p.read_text()
-          s = s.replace("View meter = new View(this);", "android.view.View meter = new android.view.View(this);")
-          marker = "        setContentView(layout);"
-          if "AKIRA // TELEMETRY" not in s:
-              panel = """
-                  // AKIRA // TELEMETRY — decorative local device dashboard
-                  LinearLayout telemetry = new LinearLayout(this);
-                  telemetry.setOrientation(LinearLayout.VERTICAL);
-                  telemetry.setPadding(18, 16, 18, 16);
-                  android.graphics.drawable.GradientDrawable panelBg = new android.graphics.drawable.GradientDrawable();
-                  panelBg.setColor(0xFF07130C);
-                  panelBg.setCornerRadius(18f);
-                  panelBg.setStroke(1, 0xFF168A50);
-                  telemetry.setBackground(panelBg);
-                  TextView telemetryTitle = new TextView(this);
-                  telemetryTitle.setText("AKIRA // TELEMETRY");
-                  telemetryTitle.setTextColor(0xFF39FF88);
-                  telemetryTitle.setTextSize(12);
-                  telemetryTitle.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
-                  telemetry.addView(telemetryTitle);
-                  TextView telemetrySub = new TextView(this);
-                  telemetrySub.setText("LOCAL LINK MONITOR  •  ENCRYPTION: N/A");
-                  telemetrySub.setTextColor(0xFF168A50);
-                  telemetrySub.setTextSize(10);
-                  telemetrySub.setTypeface(android.graphics.Typeface.MONOSPACE);
-                  LinearLayout.LayoutParams subParams = new LinearLayout.LayoutParams(-1, -2);
-                  subParams.topMargin = 5;
-                  telemetry.addView(telemetrySub, subParams);
-                  android.view.View meter = new android.view.View(this);
-                  meter.setBackgroundColor(0xFF39FF88);
-                  LinearLayout.LayoutParams meterParams = new LinearLayout.LayoutParams(-1, 3);
-                  meterParams.topMargin = 14;
-                  meterParams.bottomMargin = 12;
-                  telemetry.addView(meter, meterParams);
-                  LinearLayout metrics = new LinearLayout(this);
-                  metrics.setOrientation(LinearLayout.HORIZONTAL);
-                  String[][] metricData = {
-                      {"TRANSPORT", "WEBSOCKET"},
-                      {"PORT", "8765"},
-                      {"NETWORK", "LOCAL"}
-                  };
-                  for (String[] item : metricData) {
-                      LinearLayout cell = new LinearLayout(this);
-                      cell.setOrientation(LinearLayout.VERTICAL);
-                      TextView label = new TextView(this);
-                      label.setText(item[0]);
-                      label.setTextColor(0xFF168A50);
-                      label.setTextSize(9);
-                      label.setTypeface(android.graphics.Typeface.MONOSPACE);
-                      TextView value = new TextView(this);
-                      value.setText(item[1]);
-                      value.setTextColor(0xFFB8FFD0);
-                      value.setTextSize(11);
-                      value.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
-                      cell.addView(label);
-                      cell.addView(value);
-                      LinearLayout.LayoutParams cellParams = new LinearLayout.LayoutParams(0, -2, 1f);
-                      metrics.addView(cell, cellParams);
-                  }
-                  telemetry.addView(metrics);
-                  TextView footer = new TextView(this);
-                  footer.setText("SYSTEM READY  //  AWAITING USER COMMAND");
-                  footer.setTextColor(0xFF39FF88);
-                  footer.setTextSize(9);
-                  footer.setTypeface(android.graphics.Typeface.MONOSPACE);
-                  LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(-1, -2);
-                  footerParams.topMargin = 14;
-                  telemetry.addView(footer, footerParams);
-                  LinearLayout.LayoutParams telemetryParams = new LinearLayout.LayoutParams(-1, -2);
-                  telemetryParams.topMargin = 18;
-                  layout.addView(telemetry, telemetryParams);
-          """
+          # The redesigned phone activity already contains its own telemetry card.
+          # Keep the legacy injection only for the original layout.
+          if "setContentView(scroll)" in s:
+              print("Modern phone dashboard detected; telemetry is built in.")
+          elif "AKIRA // TELEMETRY" not in s:
+              s = s.replace("View meter = new View(this);", "android.view.View meter = new android.view.View(this);")
+              marker = "        setContentView(layout);"
               if marker not in s:
-                  raise SystemExit("Could not find setContentView(layout) in MainActivity")
-              s = s.replace(marker, panel + "\n" + marker, 1)
+                  raise SystemExit("Could not find legacy phone layout insertion point")
+              # Legacy panel is kept in the existing source archive for older layout builds.
+              raise SystemExit("Legacy telemetry injection requires the original phone layout")
               p.write_text(s)
           PY
 
