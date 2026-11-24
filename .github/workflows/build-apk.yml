@@ -1,4 +1,4 @@
-name: Build AKIRA REMOTE APKs
+name: Build SYNKRON Mobile APKs
 
 on:
   workflow_dispatch:
@@ -25,6 +25,19 @@ jobs:
 
       - name: Extract source
         run: unzip -q AKIRA_REMOTE_source.zip -d source
+
+      - name: Apply SYNKRON Mobile app label
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root = Path("source/AKIRA_REMOTE")
+          for path in list(root.rglob("strings.xml")) + list(root.rglob("AndroidManifest.xml")):
+              content = path.read_text(encoding="utf-8")
+              content = re.sub(r"(?i)akira\\s*remote", "SYNKRON Mobile", content)
+              content = re.sub(r"(?i)akira", "SYNKRON", content)
+              path.write_text(content, encoding="utf-8")
+          PY
 
       - name: Inspect phone transfer server sources
         run: |
