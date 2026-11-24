@@ -506,6 +506,42 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Open Gboard when tapping the IP field
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
+          s = p.read_text()
+          anchor = 'address.setHint("TARGET IP // PHONE");'
+          if "WATCH_GBOARD_TAP_FOCUS" not in s:
+              if anchor not in s:
+                  raise SystemExit("Could not find watch IP field hint")
+              patch = anchor + """
+                  // WATCH_GBOARD_TAP_FOCUS: explicitly request the Wear OS input method.
+                  address.setFocusableInTouchMode(true);
+                  address.setShowSoftInputOnFocus(true);
+                  address.setOnClickListener(v -> {
+                      address.requestFocus();
+                      address.post(() -> {
+                          android.view.inputmethod.InputMethodManager imm =
+                              (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                          if (imm != null) imm.showSoftInput(address,
+                              android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                      });
+                  });
+                  address.setOnFocusChangeListener((v, focused) -> {
+                      if (focused) address.post(() -> {
+                          android.view.inputmethod.InputMethodManager imm =
+                              (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                          if (imm != null) imm.showSoftInput(address,
+                              android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                      });
+                  });
+              """
+              s = s.replace(anchor, patch, 1)
+          p.write_text(s)
+          PY
+
       - name: Upload patched source for inspection
         uses: actions/upload-artifact@v4
         with:
