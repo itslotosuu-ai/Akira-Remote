@@ -26,6 +26,9 @@ jobs:
       - name: Extract source
         run: unzip -q AKIRA_REMOTE_source.zip -d source
 
+      - name: Apply redesigned phone interface
+        run: cp phone/MainActivity.java source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/MainActivity.java
+
       - name: Patch MediaProjection startup
         run: |
           python3 - <<'PY'
