@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -22,10 +24,16 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
 import java.net.NetworkInterface;
 import java.net.Inet4Address;
 import java.util.Collections;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import org.java_websocket.WebSocket;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.WebSocketServer;
 
 public class MainActivity extends Activity {
     private static final int REQUEST_CAPTURE = 41;
@@ -36,6 +44,9 @@ public class MainActivity extends Activity {
     private static final int LINE = 0xFF1D5635;
     private TextView status, ipValue;
     private RadarBackground radar;
+    private ImageView pcPreview;
+    private TextView pcStreamStatus;
+    private PcScreenServer pcScreenServer;
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -100,6 +111,15 @@ public class MainActivity extends Activity {
         Button stop = button("03   ОСТАНОВИТЬ ТРАНСЛЯЦИЮ", false); controls.addView(stop,params(-1,46,0,0,0,0));
         stop.setOnClickListener(v -> { Intent i=new Intent(this,CaptureService.class); i.setAction(CaptureService.ACTION_STOP); startService(i); setStatus("● ТРАНСЛЯЦИЯ ОСТАНОВЛЕНА",MUTED); });
 
+        LinearLayout pcMirror = card(page, "ЭКРАН WINDOWS", "PC → PHONE  //  LAN SCREEN RECEIVER");
+        pcStreamStatus = text("● ОЖИДАНИЕ ПК  •  PORT 8766", 12, GREEN, true);
+        pcMirror.addView(pcStreamStatus, params(-1, -2, 0, 0, 0, 10));
+        pcPreview = new ImageView(this);
+        pcPreview.setBackground(rounded(0xFF020604, 12, LINE));
+        pcPreview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        pcMirror.addView(pcPreview, params(-1, 220, 0, 0, 0, 8));
+        pcMirror.addView(text("Открой AKIRA REMOTE на Windows, введи IP телефона и нажми START PC STREAM. Оба устройства должны быть в одной Wi-Fi сети.", 10, MUTED, false), params(-1, -2, 0, 4, 0, 0));
+
         LinearLayout guide = card(page,"КАК ПОДКЛЮЧИТЬ ЧАСЫ","QUICK START  //  3 STEPS");
         guide.addView(step("01","Разреши службу управления","Открой настройки специальных возможностей и включи AKIRA Remote."));
         guide.addView(step("02","Запусти трансляцию","Нажми кнопку запуска и подтверди системный запрос Android."));
@@ -107,6 +127,7 @@ public class MainActivity extends Activity {
         LinearLayout foot=new LinearLayout(this); foot.setGravity(Gravity.CENTER); foot.setPadding(0,dp(20),0,dp(4));
         foot.addView(text("AKIRA SYSTEMS   •   LOCAL NETWORK ONLY",9,MUTED,true)); page.addView(foot);
         setContentView(scroll);
+        startPcScreenServer();
     }
     private LinearLayout card(LinearLayout parent,String title,String sub) {
         LinearLayout box=new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16),dp(15),dp(16),dp(16)); box.setBackground(rounded(PANEL,18,LINE));
@@ -121,7 +142,45 @@ public class MainActivity extends Activity {
     private int dp(int v) { return (int)(v*getResources().getDisplayMetrics().density+0.5f); }
     private void setStatus(String value,int color) { status.setText(value); status.setTextColor(color); }
     @Override protected void onActivityResult(int request,int result,Intent data) { super.onActivityResult(request,result,data); if(request==REQUEST_CAPTURE&&result==RESULT_OK&&data!=null){Intent i=new Intent(this,CaptureService.class);i.putExtra(CaptureService.EXTRA_RESULT_CODE,result);i.putExtra(CaptureService.EXTRA_DATA,data);startForegroundService(i);setStatus("● ТРАНСЛЯЦИЯ АКТИВНА",GREEN);}else if(request==REQUEST_CAPTURE)setStatus("● ДОСТУП К ЭКРАНУ НЕ ПОЛУЧЕН",0xFFFFB45E); }
-    @Override protected void onDestroy() { if (radar != null) radar.stop(); super.onDestroy(); }
+    private void startPcScreenServer() {
+        try {
+            pcScreenServer = new PcScreenServer(new InetSocketAddress("0.0.0.0", 8766));
+            pcScreenServer.start();
+        } catch (Exception e) {
+            if (pcStreamStatus != null) pcStreamStatus.setText("ERR:// PORT 8766 UNAVAILABLE");
+        }
+    }
+    private class PcScreenServer extends WebSocketServer {
+        PcScreenServer(InetSocketAddress address) { super(address); setReuseAddr(true); }
+        @Override public void onOpen(WebSocket conn, ClientHandshake handshake) {
+            runOnUiThread(() -> { if (pcStreamStatus != null) pcStreamStatus.setText("● ПК ПОДКЛЮЧЁН  •  RX ACTIVE"); });
+        }
+        @Override public void onClose(WebSocket conn, int code, String reason, boolean remote) {
+            runOnUiThread(() -> { if (pcStreamStatus != null) pcStreamStatus.setText("● ОЖИДАНИЕ ПК  •  PORT 8766"); });
+        }
+        @Override public void onMessage(WebSocket conn, String message) { }
+        @Override public void onMessage(WebSocket conn, ByteBuffer bytes) {
+            try {
+                ByteBuffer copy = bytes.slice();
+                byte[] data = new byte[copy.remaining()];
+                copy.get(data);
+                Bitmap frame = BitmapFactory.decodeByteArray(data, 0, data.length);
+                if (frame != null) runOnUiThread(() -> {
+                    if (pcPreview != null) pcPreview.setImageBitmap(frame);
+                    if (pcStreamStatus != null) pcStreamStatus.setText("● ПРИЁМ ЭКРАНА WINDOWS  •  " + frame.getWidth() + "×" + frame.getHeight());
+                });
+            } catch (Exception ignored) { }
+        }
+        @Override public void onError(WebSocket conn, Exception ex) {
+            runOnUiThread(() -> { if (pcStreamStatus != null) pcStreamStatus.setText("ERR:// PC STREAM SOCKET"); });
+        }
+        @Override public void onStart() { }
+    }
+    @Override protected void onDestroy() {
+        try { if (pcScreenServer != null) pcScreenServer.stop(500); } catch (Exception ignored) { }
+        if (radar != null) radar.stop();
+        super.onDestroy();
+    }
     private String getLocalIp() { try { for(NetworkInterface ni:Collections.list(NetworkInterface.getNetworkInterfaces())) for(java.net.InetAddress a:Collections.list(ni.getInetAddresses())) if(!a.isLoopbackAddress()&&a instanceof Inet4Address)return a.getHostAddress(); }catch(Exception ignored){} return "IP не найден — проверь Wi-Fi"; }
 }
 
