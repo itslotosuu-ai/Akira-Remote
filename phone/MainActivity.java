@@ -27,6 +27,11 @@ import android.widget.TextView;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.net.Uri;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.LinkProperties;
+import android.net.LinkAddress;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -323,7 +328,49 @@ public class MainActivity extends Activity {
         if (radar != null) radar.stop();
         super.onDestroy();
     }
-    private String getLocalIp() { try { for(NetworkInterface ni:Collections.list(NetworkInterface.getNetworkInterfaces())) for(java.net.InetAddress a:Collections.list(ni.getInetAddresses())) if(!a.isLoopbackAddress()&&a instanceof Inet4Address)return a.getHostAddress(); }catch(Exception ignored){} return "IP не найден — проверь Wi-Fi"; }
+    private String getLocalIp() {
+        try {
+            ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+            if (cm != null) {
+                // Prefer the actual Wi-Fi network, not the first IPv4 interface.
+                Network active = cm.getActiveNetwork();
+                if (active != null) {
+                    NetworkCapabilities caps = cm.getNetworkCapabilities(active);
+                    if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                        String ip = ipv4FromNetwork(cm, active);
+                        if (ip != null) return ip;
+                    }
+                }
+                for (Network network : cm.getAllNetworks()) {
+                    NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+                    if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                        String ip = ipv4FromNetwork(cm, network);
+                        if (ip != null) return ip;
+                    }
+                }
+            }
+            for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                String name = ni.getName() == null ? "" : ni.getName().toLowerCase(java.util.Locale.ROOT);
+                if (!name.startsWith("wlan") && !name.startsWith("wifi")) continue;
+                for (java.net.InetAddress a : Collections.list(ni.getInetAddresses())) {
+                    if (!a.isLoopbackAddress() && a instanceof Inet4Address) return a.getHostAddress();
+                }
+            }
+        } catch (Exception ignored) { }
+        return "IP Wi-Fi не найден — подключись к Wi-Fi";
+    }
+
+    private String ipv4FromNetwork(ConnectivityManager cm, Network network) {
+        try {
+            LinkProperties props = cm.getLinkProperties(network);
+            if (props == null) return null;
+            for (LinkAddress link : props.getLinkAddresses()) {
+                java.net.InetAddress address = link.getAddress();
+                if (!address.isLoopbackAddress() && address instanceof Inet4Address) return address.getHostAddress();
+            }
+        } catch (Exception ignored) { }
+        return null;
+    }
 }
 
 
