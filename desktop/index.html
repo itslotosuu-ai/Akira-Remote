@@ -128,7 +128,7 @@ body.no-motion .radar-sweep{animation:none}
 </head>
 <body>
 <div class="hud-orb" aria-hidden="true"><div class="hud-ring ring-a"></div><div class="hud-ring ring-b"></div><div class="hud-ring ring-c"></div><div class="hud-core"></div></div>
-<header><div><div class="brand">SYNKRON // REMOTE</div><div class="sub">DESKTOP CONSOLE • WEBSOCKET LINK • PORT 8765</div></div><div class="sub">LOCAL CONTROL INTERFACE</div></header>
+<header><div><div class="brand">SYNKRON // REMOTE</div><div class="sub">DESKTOP CONSOLE • LOCAL WI-FI • PORT 8765</div></div><div class="sub">LOCAL CONTROL INTERFACE</div></header>
 <main>
 <nav class="panel sidebar" aria-label="Основная навигация">
  <div class="nav-label">MAIN SYSTEM</div>
@@ -143,7 +143,7 @@ body.no-motion .radar-sweep{animation:none}
  <div class="toolbar"><input id="ip" placeholder="IP телефона, например 192.168.1.25" autocomplete="off"><button id="connect">CONNECT</button><button id="disconnect" disabled>DISCONNECT</button></div>
  <div id="status">SYS:// STANDBY — запусти трансляцию на телефоне и введи его IP</div>
  <div class="radar-panel" id="device-radar">
-  <div class="radar-head"><span class="radar-title">SYNK CORE // DEVICE RADAR</span><span class="radar-caption" id="radarClock">SCANNING LOCAL LINK</span></div>
+  <div class="radar-head"><span class="radar-title">SYNK CORE // DEVICE RADAR</span><span class="radar-caption" id="radarClock">SCANNING LOCAL NETWORK</span></div>
   <div class="radar-stage">
    <div class="radar-disc"></div><div class="radar-sweep"></div>
    <div class="radar-core">A</div>
@@ -204,7 +204,7 @@ body.no-motion .radar-sweep{animation:none}
 <script>
 const $=id=>document.getElementById(id);let ws=null,frameUrl=null,pointer=null;
 function status(s){$('status').textContent=s}
-function setPhoneState(online,label){$('phoneNode').classList.toggle('online',online);$('phoneNodeState').textContent=label;$('phoneLegend').textContent=online?'LINKED':'OFFLINE';$('radarClock').textContent=online?'PHONE LINK // ACTIVE':'SCANNING LOCAL LINK'}
+function setPhoneState(online,label){$('phoneNode').classList.toggle('online',online);$('phoneNodeState').textContent=label;$('phoneLegend').textContent=online?'CONNECTED':'OFFLINE';$('radarClock').textContent=online?'LOCAL PHONE CONNECTION // ACTIVE':'SCANNING LOCAL NETWORK'}
 function log(s){$('log').textContent=('> '+s+'\n'+$('log').textContent).split('\n').slice(0,5).join('\n')}
 function send(obj){if(ws&&ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(obj));else log('COMMAND BLOCKED: OFFLINE')}
 function connect(){
@@ -212,14 +212,14 @@ function connect(){
  if(!ip){status('ERR:// PHONE IP REQUIRED');return}
  try{ws=new WebSocket('ws://'+ip+':8765');ws.binaryType='arraybuffer'}catch(e){status('ERR:// INVALID ADDRESS');return}
  status('HANDSHAKE // '+ip+':8765');$('connect').disabled=true;
- ws.onopen=()=>{status('LINK ESTABLISHED // RECEIVING VIDEO');$('disconnect').disabled=false;setPhoneState(true,'CONNECTED');log('SOCKET CONNECTED')};
+ ws.onopen=()=>{status('LOCAL CONNECTION ESTABLISHED // RECEIVING VIDEO');$('disconnect').disabled=false;setPhoneState(true,'CONNECTED');log('SOCKET CONNECTED')};
  ws.onmessage=e=>{
   if(typeof e.data==='string'){try{const m=JSON.parse(e.data);if(m.type==='pong')log('PHONE ONLINE')}catch(_){}return}
   const blob=e.data instanceof Blob?e.data:new Blob([e.data],{type:'image/jpeg'});
   if(frameUrl)URL.revokeObjectURL(frameUrl);frameUrl=URL.createObjectURL(blob);$('screen').src=frameUrl;$('screen').style.display='block';$('placeholder').style.display='none';
  };
  ws.onerror=()=>{status('ERR:// CONNECTION FAILED — проверь IP, Wi‑Fi и порт 8765');setPhoneState(false,'NO LINK');log('SOCKET ERROR')};
- ws.onclose=()=>{status('LINK LOST // IDLE');setPhoneState(false,'OFFLINE');$('connect').disabled=false;$('disconnect').disabled=true;log('SOCKET CLOSED')};
+ ws.onclose=()=>{status('CONNECTION LOST // IDLE');setPhoneState(false,'OFFLINE');$('connect').disabled=false;$('disconnect').disabled=true;log('SOCKET CLOSED')};
 }
 function disconnect(){if(ws){ws.close();ws=null}setPhoneState(false,'OFFLINE')}
 $('connect').onclick=connect;$('disconnect').onclick=disconnect;
@@ -327,7 +327,7 @@ window.addEventListener('beforeunload',()=>{if(frameUrl)URL.revokeObjectURL(fram
   if(!ip){set("ERR:// PHONE IP REQUIRED");return}
   try{fileWs=new WebSocket("ws://"+ip+":8767");fileWs.binaryType="arraybuffer"}catch(e){set("ERR:// INVALID ADDRESS");return}
   set("HANDSHAKE // "+ip+":8767");
-  fileWs.onopen=()=>{set("FILE LINK ESTABLISHED // READY");$("fileSend").disabled=false};
+  fileWs.onopen=()=>{set("FILE LOCAL CONNECTION ESTABLISHED // READY");$("fileSend").disabled=false};
   fileWs.onclose=()=>{$("fileSend").disabled=true;set("FILE LINK CLOSED")};
   fileWs.onerror=()=>set("ERR:// FILE LINK FAILED");
   fileWs.onmessage=e=>{
