@@ -1,4 +1,4 @@
-name: Build AKIRA REMOTE Desktop
+name: Build SYNKRON Desktop
 
 on:
   workflow_dispatch:
@@ -30,7 +30,7 @@ jobs:
       - name: Upload Windows builds
         uses: actions/upload-artifact@v4
         with:
-          name: AKIRA-REMOTE-Windows
+          name: SYNKRON-Windows
           path: |
             desktop/dist/*.exe
           if-no-files-found: error
