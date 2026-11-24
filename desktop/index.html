@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AKIRA REMOTE // DESKTOP</title>
+<title>SYNKRON REMOTE // DESKTOP</title>
 <style>
 :root{color-scheme:dark;--green:#39ff88;--muted:#168a50;--panel:#07130c;--line:#164b2c}\nbody:before{content:\"\";position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(#39ff8809 1px,transparent 1px),linear-gradient(90deg,#39ff8809 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,black,transparent 90%);animation:gridPulse 7s ease-in-out infinite alternate}\nbody:after{content:\"\";position:fixed;width:520px;height:520px;right:-170px;top:70px;border:1px solid #39ff8822;border-radius:50%;pointer-events:none;z-index:0;box-shadow:0 0 0 28px #39ff8808,0 0 0 56px #39ff8806,0 0 0 84px #39ff8804;animation:radarSpin 36s linear infinite}\n@keyframes radarSpin{to{transform:rotate(360deg)}}@keyframes gridPulse{from{opacity:.35}to{opacity:.85}}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#10251a 0,#050907 55%);color:#d7ffe5;font:14px ui-monospace,SFMono-Regular,Consolas,monospace;min-height:100vh}
@@ -42,7 +42,7 @@ body[data-wall="plain"]:before,body[data-wall="plain"]:after{opacity:0}
 
 .pc-stream{margin-top:18px;padding-top:15px;border-top:1px solid var(--line)}.pc-stream h3{color:var(--green);font-size:13px;margin:0 0 10px}.pc-stream input,.pc-stream select{width:100%;background:#020604;border:1px solid var(--muted);color:var(--green);padding:10px;border-radius:7px;font:inherit;margin:4px 0 8px}.pc-stream .pc-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pc-stream .pc-state{font-size:10px;color:var(--muted);line-height:1.7;margin:8px 0}.pc-stream .pc-meter{height:4px;background:#10251a;border-radius:8px;overflow:hidden}.pc-stream .pc-meter span{display:block;height:100%;width:0;background:var(--green);box-shadow:0 0 12px var(--green);transition:width .2s}.pc-stream .pc-live{animation:statusGlow 1.5s ease-in-out infinite alternate}
 
-/* AKIRA GLASS HUD // visual layer */
+/* SYNKRON GLASS HUD // visual layer */
 :root{--glass-alpha:.72;--glass-blur:14px;--hud-speed:36s}
 body{background:radial-gradient(ellipse at 50% 48%,#0b2818 0%,#030806 48%,#020403 100%)}
 body:before{opacity:.45}
@@ -100,7 +100,7 @@ button{border-radius:4px;letter-spacing:.5px}
 @media(max-width:850px){main{grid-template-columns:1fr;padding:12px}.sidebar{min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;order:0}.nav-label,.nav-foot{display:none}.nav-link{justify-content:center;flex-direction:column;gap:4px;padding:9px 3px;font-size:9px}.side{order:2}.screen-wrap{height:55vh;min-height:280px}header:after{display:none}.hud-orb{min-width:360px;min-height:360px;opacity:.2}}
 
 
-/* AKIRA CORE / DEVICE RADAR */
+/* SYNK CORE / DEVICE RADAR */
 .radar-panel{margin:14px 0 16px;padding:13px 14px 15px;border:1px solid color-mix(in srgb,var(--green) 25%,transparent);border-radius:5px;background:linear-gradient(120deg,#031009d9,#06150bb8);position:relative;overflow:hidden}
 .radar-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .radar-title{font-size:10px;letter-spacing:2px;color:var(--green)}
@@ -128,7 +128,7 @@ body.no-motion .radar-sweep{animation:none}
 </head>
 <body>
 <div class="hud-orb" aria-hidden="true"><div class="hud-ring ring-a"></div><div class="hud-ring ring-b"></div><div class="hud-ring ring-c"></div><div class="hud-core"></div></div>
-<header><div><div class="brand">AKIRA // REMOTE</div><div class="sub">DESKTOP CONSOLE • WEBSOCKET LINK • PORT 8765</div></div><div class="sub">LOCAL CONTROL INTERFACE</div></header>
+<header><div><div class="brand">SYNKRON // REMOTE</div><div class="sub">DESKTOP CONSOLE • WEBSOCKET LINK • PORT 8765</div></div><div class="sub">LOCAL CONTROL INTERFACE</div></header>
 <main>
 <nav class="panel sidebar" aria-label="Основная навигация">
  <div class="nav-label">MAIN SYSTEM</div>
@@ -137,13 +137,13 @@ body.no-motion .radar-sweep{animation:none}
  <a class="nav-link" href="#pc-stream"><span class="nav-icon">▣</span> SCREEN BEAM</a>
  <a class="nav-link" href="#file-transfer"><span class="nav-icon">⇄</span> FILE TRANSFER</a>
  <a class="nav-link" href="#appearance"><span class="nav-icon">◈</span> CUSTOMIZE</a>
- <div class="nav-foot">AKIRA CORE v2.0<br>LOCAL NETWORK<br>SYS.STATUS: READY</div>
+ <div class="nav-foot">SYNK CORE v2.0<br>LOCAL NETWORK<br>SYS.STATUS: READY</div>
 </nav>
 <section class="panel" id="viewport">
  <div class="toolbar"><input id="ip" placeholder="IP телефона, например 192.168.1.25" autocomplete="off"><button id="connect">CONNECT</button><button id="disconnect" disabled>DISCONNECT</button></div>
  <div id="status">SYS:// STANDBY — запусти трансляцию на телефоне и введи его IP</div>
  <div class="radar-panel" id="device-radar">
-  <div class="radar-head"><span class="radar-title">AKIRA CORE // DEVICE RADAR</span><span class="radar-caption" id="radarClock">SCANNING LOCAL LINK</span></div>
+  <div class="radar-head"><span class="radar-title">SYNK CORE // DEVICE RADAR</span><span class="radar-caption" id="radarClock">SCANNING LOCAL LINK</span></div>
   <div class="radar-stage">
    <div class="radar-disc"></div><div class="radar-sweep"></div>
    <div class="radar-core">A</div>
