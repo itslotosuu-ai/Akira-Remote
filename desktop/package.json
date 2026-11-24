@@ -46,10 +46,10 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "artifactName": "SYNKRON-REMOTE-Setup-${version}-${arch}.${ext}"
+      "artifactName": "SYNKRON-Desktop-Setup-${version}-${arch}.${ext}"
     },
     "portable": {
-      "artifactName": "SYNKRON-REMOTE-Portable-${version}-${arch}.${ext}"
+      "artifactName": "SYNKRON-Desktop-Portable-${version}-${arch}.${ext}"
     }
   }
 }
