@@ -474,6 +474,38 @@ jobs:
           capture.write_text(c)
           PY
 
+      - name: Reconnect watch stream after display wake
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
+          s = p.read_text()
+          marker = "    @Override protected void onDestroy() {"
+          if "WATCH_WAKE_RECONNECT" not in s:
+              if marker not in s:
+                  raise SystemExit("Could not find WatchActivity onDestroy insertion point")
+              code = """    // WATCH_WAKE_RECONNECT: Wear OS may suspend the socket while the display is off.
+              @Override protected void onResume() {
+                  super.onResume();
+                  if (client != null) {
+                      try { client.close(); } catch (Exception ignored) {}
+                      client = null;
+                  }
+                  if (address != null && address.getText() != null
+                          && address.getText().toString().trim().length() > 0) {
+                      if (status != null) status.setText("WAKE:// RESTORING LINK");
+                      if (screen != null) screen.setImageDrawable(null);
+                      uiHandler.postDelayed(() -> {
+                          if (client == null || !client.isOpen()) connect();
+                      }, 450);
+                  }
+              }
+
+          """
+              s = s.replace(marker, code + marker, 1)
+          p.write_text(s)
+          PY
+
       - name: Upload patched source for inspection
         uses: actions/upload-artifact@v4
         with:
