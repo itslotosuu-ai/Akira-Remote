@@ -440,6 +440,7 @@ jobs:
           if "BatteryManager" not in c:
               c = c.replace("import android.app.*;", "import android.app.*;" + chr(10) + "import android.content.IntentFilter;" + chr(10) + "import android.os.BatteryManager;", 1)
           old_commands = """                ControlAccessibilityService a = ControlAccessibilityService.INSTANCE;
+                          if (a == null) return;
                           String type = j.optString("type");
                           if ("tap".equals(type)) a.tap((float)j.optDouble("x"), (float)j.optDouble("y"));
                           else if ("swipe".equals(type)) a.swipe((float)j.optDouble("x1"), (float)j.optDouble("y1"),
