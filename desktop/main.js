@@ -1,7 +1,7 @@
-const { app, BrowserWindow, Menu } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, desktopCapturer } = require("electron");
 const path = require("path");
 
-function createWindow() {
+ipcMain.handle("akira:get-screen-sources", async () => {\n  const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 320, height: 180 } });\n  return sources.map(source => ({ id: source.id, name: source.name }));\n});\n\nfunction createWindow() {
   const win = new BrowserWindow({
     width: 1440,
     height: 920,
@@ -11,7 +11,7 @@ function createWindow() {
     title: "AKIRA REMOTE // DESKTOP",
     autoHideMenuBar: true,
     webPreferences: {
-      contextIsolation: true,
+      preload: path.join(__dirname, "preload.js"),\n      contextIsolation: true,
       nodeIntegration: false,
       sandbox: true
     }
