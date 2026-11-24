@@ -282,7 +282,7 @@ jobs:
           from pathlib import Path
           watch = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
           s = watch.read_text()
-          s = s.replace("import android.os.Bundle;", "import android.os.Bundle;\\nimport android.os.Handler;\\nimport android.os.Looper;")
+          s = s.replace("import android.os.Bundle;", "import android.os.Bundle;" + chr(10) + "import android.os.Handler;" + chr(10) + "import android.os.Looper;")
           field = "    private final AtomicReference<android.graphics.Bitmap> latest = new AtomicReference<>();"
           additions = """    private final AtomicReference<android.graphics.Bitmap> latest = new AtomicReference<>();
               private TextView hud, log;
