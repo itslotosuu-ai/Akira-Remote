@@ -34,7 +34,7 @@ jobs:
           root = Path("source/AKIRA_REMOTE")
           for path in list(root.rglob("strings.xml")) + list(root.rglob("AndroidManifest.xml")):
               content = path.read_text(encoding="utf-8")
-              content = re.sub(r"(?i)akira\\s*remote", "SYNKRON Mobile", content)
+              content = re.sub(r"(?i)akira\s*remote", "SYNKRON Mobile", content)
               content = re.sub(r"(?i)akira", "SYNKRON", content)
               path.write_text(content, encoding="utf-8")
           PY
@@ -70,7 +70,7 @@ jobs:
               projection.registerCallback(new MediaProjection.Callback() {
                   @Override public void onStop() { stopSelf(); }
               }, handler);
-              display = projection.createVirtualDisplay("AKIRA_REMOTE", width, height, density,
+              display = projection.createVirtualDisplay("SYNKRON", width, height, density,
                   DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, reader.getSurface(), null, handler);
               server = new RemoteServer(new InetSocketAddress(PORT));
               server.start();'''
@@ -114,7 +114,7 @@ jobs:
           s = s.replace("root.setPadding(8, 10, 8, 8);", "root.setPadding(6, 6, 6, 6);")
           s = s.replace("root.setBackgroundColor(Color.rgb(12,15,21));", "root.setBackgroundColor(Color.BLACK);")
           s = s.replace('''        address = new EditText(this);''', '''        TextView header = new TextView(this);
-                  header.setText("AKIRA // REMOTE");
+                  header.setText("SYNKRON // WATCH");
                   header.setTextColor(0xFF39FF88);
                   header.setTextSize(13);
                   header.setGravity(Gravity.CENTER);
@@ -163,7 +163,7 @@ jobs:
           p = p.replace('getWindow().setNavigationBarColor(0xFF10131A);', 'getWindow().setNavigationBarColor(0xFF000000);')
           p = p.replace('layout.setPadding(28, 48, 28, 28);', 'layout.setPadding(24, 42, 24, 24);')
           p = p.replace('layout.setBackgroundColor(0xFF10131A);', 'layout.setBackgroundColor(0xFF000000);')
-          p = p.replace('title.setText("AKIRA  /  REMOTE");', 'title.setText("AKIRA // REMOTE");\n        title.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);')
+          p = p.replace('title.setText("SYNKRON  /  WATCH");', 'title.setText("SYNKRON // WATCH");\n        title.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);')
           p = p.replace('title.setTextColor(0xFFFFFFFF);', 'title.setTextColor(0xFF39FF88);')
           p = p.replace('subtitle.setText("PHONE CONTROL • WEAR OS");', 'subtitle.setText("SYS.BOOT  •  WEAR OS LINK  •  PORT 8765");\n        subtitle.setTypeface(android.graphics.Typeface.MONOSPACE);')
           p = p.replace('subtitle.setTextColor(0xFF8D9AAF);', 'subtitle.setTextColor(0xFF168A50);')
@@ -244,7 +244,7 @@ jobs:
           # Keep the legacy injection only for the original layout.
           if "setContentView(scroll)" in s:
               print("Modern phone dashboard detected; telemetry is built in.")
-          elif "AKIRA // TELEMETRY" not in s:
+          elif "SYNKRON // TELEMETRY" not in s:
               s = s.replace("View meter = new View(this);", "android.view.View meter = new android.view.View(this);")
               marker = "        setContentView(layout);"
               if marker not in s:
