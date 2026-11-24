@@ -27,7 +27,7 @@ test("health endpoint and two-peer signaling relay", async t => {
   t.after(() => { if (child && !child.killed) child.kill("SIGTERM"); });
   await waitForHealth();
   const health = await (await fetch(`http://127.0.0.1:${port}/healthz`)).json();
-  assert.equal(health.service, "akira-link-relay");
+  assert.equal(health.service, "synkron-link-relay");
 
   const room = "A".repeat(43);
   const connect = role => new WebSocket(`ws://127.0.0.1:${port}/v1/signal?room=${room}&role=${role}`);
