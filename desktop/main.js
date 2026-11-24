@@ -8,7 +8,7 @@ ipcMain.handle("synkron:get-screen-sources", async () => {\n  const sources = aw
     minWidth: 900,
     minHeight: 650,
     backgroundColor: "#050907",
-    title: "synkron REMOTE // DESKTOP",
+    title: "SYNKRON Desktop // CONTROL NODE",
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),\n      contextIsolation: true,
