@@ -70,6 +70,18 @@ jobs:
           import re
           watch = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
           s = watch.read_text()
+          s = s.replace('private String phoneBattery = "--", phoneTemp = "--", frameSize = "--";',
+              'private String phoneBattery = "--", phoneTemp = "--", phoneNetwork = "--", frameSize = "--";')
+          s = s.replace('phoneTemp = reply.optString("temp", "--");',
+              'phoneTemp = reply.optString("temp", "--");' + chr(10) + '                            phoneNetwork = reply.optString("network", "--");')
+          s = s.replace('" • TEMP " + phoneTemp + " • " + frameSize',
+              '" • TEMP " + phoneTemp + " • NET " + phoneNetwork + " • " + frameSize')
+          s = s.replace('''        if (screen.getDrawable() == null) return null;''',
+              '''        if (screen.getScaleType() == ImageView.ScaleType.FIT_XY) {
+                      return new float[]{clamp(viewX / Math.max(1f, screen.getWidth())),
+                          clamp(viewY / Math.max(1f, screen.getHeight()))};
+                  }
+                  if (screen.getDrawable() == null) return null;''', 1)
           s = s.replace("root.setPadding(8, 10, 8, 8);", "root.setPadding(6, 6, 6, 6);")
           s = s.replace("root.setBackgroundColor(Color.rgb(12,15,21));", "root.setBackgroundColor(Color.BLACK);")
           s = s.replace('''        address = new EditText(this);''', '''        TextView header = new TextView(this);
@@ -437,6 +449,17 @@ jobs:
 
           capture = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/CaptureService.java")
           c = capture.read_text()
+          if "import android.net.ConnectivityManager;" not in c:
+              c = c.replace("import android.os.BatteryManager;", "import android.os.BatteryManager;" + chr(10) + "import android.net.ConnectivityManager;" + chr(10) + "import android.net.Network;" + chr(10) + "import android.net.NetworkCapabilities;", 1)
+          c = c.replace('''                                  pong.put("temp", temp < 0 ? "--" : String.format(java.util.Locale.US, "%.1fC", temp / 10f));
+                                  conn.send(pong.toString());''',
+              '''                                  pong.put("temp", temp < 0 ? "--" : String.format(java.util.Locale.US, "%.1fC", temp / 10f));
+                                  ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+                                  Network active = cm == null ? null : cm.getActiveNetwork();
+                                  NetworkCapabilities caps = (cm == null || active == null) ? null : cm.getNetworkCapabilities(active);
+                                  String net = caps == null ? "OFFLINE" : (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ? "WIFI" : "ONLINE");
+                                  pong.put("network", net);
+                                  conn.send(pong.toString());''', 1)
           if "BatteryManager" not in c:
               c = c.replace("import android.app.*;", "import android.app.*;" + chr(10) + "import android.content.IntentFilter;" + chr(10) + "import android.os.BatteryManager;", 1)
           old_commands = """                ControlAccessibilityService a = ControlAccessibilityService.INSTANCE;
