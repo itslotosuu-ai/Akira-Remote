@@ -199,6 +199,7 @@ jobs:
           from pathlib import Path
           p = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/MainActivity.java")
           s = p.read_text()
+          s = s.replace("View meter = new View(this);", "android.view.View meter = new android.view.View(this);")
           marker = "        setContentView(layout);"
           if "AKIRA // TELEMETRY" not in s:
               panel = """
