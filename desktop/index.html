@@ -323,7 +323,7 @@ window.addEventListener('beforeunload',()=>{if(frameUrl)URL.revokeObjectURL(fram
  const $=id=>document.getElementById(id); let fileWs=null, pendingName="phone-file";
  const set=(v)=>{$("fileStatus").textContent=v};
  $("fileConnect").onclick=()=>{
-  const ip=$("filePhoneIp").value.trim().replace(/^ws:\/\//,'').replace(/:\\d+$/,'');
+  const ip=$("filePhoneIp").value.trim().replace(/^ws:\/\//,'').replace(/:\d+$/,'');
   if(!ip){set("ERR:// PHONE IP REQUIRED");return}
   try{fileWs=new WebSocket("ws://"+ip+":8767");fileWs.binaryType="arraybuffer"}catch(e){set("ERR:// INVALID ADDRESS");return}
   set("HANDSHAKE // "+ip+":8767");
