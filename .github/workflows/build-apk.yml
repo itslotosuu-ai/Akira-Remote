@@ -324,7 +324,7 @@ jobs:
                   log.setMaxLines(2);
                   root.addView(log, new LinearLayout.LayoutParams(-1, 28));'''
           if 'LOG:// SYSTEM INITIALIZED' not in s:
-              s = s.replace('        setContentView(root);', quick + '\\n        setContentView(root);', 1)
+              s = s.replace('        setContentView(root);', quick + chr(10) + '        setContentView(root);', 1)
           old_open = '                @Override public void onOpen(ServerHandshake h) { runOnUiThread(() -> status.setText("LINK ESTABLISHED // RX")); }'
           new_open = '''                @Override public void onOpen(ServerHandshake h) {
                               runOnUiThread(() -> { status.setText("LINK ESTABLISHED // RX"); appendLog("LINK ESTABLISHED"); updateHud(); });
