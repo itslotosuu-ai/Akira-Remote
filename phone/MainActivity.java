@@ -26,6 +26,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.net.Uri;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import org.json.JSONObject;
 import java.net.NetworkInterface;
 import java.net.Inet4Address;
 import java.util.Collections;
@@ -47,6 +53,9 @@ public class MainActivity extends Activity {
     private ImageView pcPreview;
     private TextView pcStreamStatus;
     private PcScreenServer pcScreenServer;
+    private FileTransferServer fileTransferServer;
+    private TextView fileTransferStatus;
+    private static final int REQUEST_FILE_PICK = 42;
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -120,6 +129,19 @@ public class MainActivity extends Activity {
         pcMirror.addView(pcPreview, params(-1, 220, 0, 0, 0, 8));
         pcMirror.addView(text("Открой AKIRA REMOTE на Windows, введи IP телефона и нажми START PC STREAM. Оба устройства должны быть в одной Wi-Fi сети.", 10, MUTED, false), params(-1, -2, 0, 4, 0, 0));
 
+        LinearLayout files = card(page, "ЦЕНТР ПЕРЕДАЧИ ФАЙЛОВ", "FILE TRANSFER  //  PHONE ⇄ WINDOWS");
+        fileTransferStatus = text("● ОЖИДАНИЕ ПК  •  PORT 8767", 11, GREEN, true);
+        files.addView(fileTransferStatus, params(-1, -2, 0, 0, 0, 10));
+        Button sendPhoneFile = button("↑   ОТПРАВИТЬ ФАЙЛ НА ПК", true);
+        files.addView(sendPhoneFile, params(-1, 50, 0, 0, 0, 8));
+        sendPhoneFile.setOnClickListener(v -> {
+            Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            pick.setType("*/*"); pick.addCategory(Intent.CATEGORY_OPENABLE);
+            startActivityForResult(pick, REQUEST_FILE_PICK);
+        });
+        files.addView(text("Файлы, отправленные с Windows, сохраняются в папке приложения AKIRA-Received. Для передачи оба устройства должны быть в одной Wi-Fi сети.", 10, MUTED, false));
+        files.addView(text("TRANSFER LINK  //  TCP 8767", 9, GREEN, true), params(-1,-2,0,10,0,0));
+
         LinearLayout guide = card(page,"КАК ПОДКЛЮЧИТЬ ЧАСЫ","QUICK START  //  3 STEPS");
         guide.addView(step("01","Разреши службу управления","Открой настройки специальных возможностей и включи AKIRA Remote."));
         guide.addView(step("02","Запусти трансляцию","Нажми кнопку запуска и подтверди системный запрос Android."));
@@ -128,6 +150,7 @@ public class MainActivity extends Activity {
         foot.addView(text("AKIRA SYSTEMS   •   LOCAL NETWORK ONLY",9,MUTED,true)); page.addView(foot);
         setContentView(scroll);
         startPcScreenServer();
+        startFileTransferServer();
     }
     private LinearLayout card(LinearLayout parent,String title,String sub) {
         LinearLayout box=new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16),dp(15),dp(16),dp(16)); box.setBackground(rounded(PANEL,18,LINE));
@@ -141,7 +164,69 @@ public class MainActivity extends Activity {
     private LinearLayout.LayoutParams params(int w,int h,int l,int t,int r,int b) { LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(w,h); p.setMargins(dp(l),dp(t),dp(r),dp(b)); return p; }
     private int dp(int v) { return (int)(v*getResources().getDisplayMetrics().density+0.5f); }
     private void setStatus(String value,int color) { status.setText(value); status.setTextColor(color); }
-    @Override protected void onActivityResult(int request,int result,Intent data) { super.onActivityResult(request,result,data); if(request==REQUEST_CAPTURE&&result==RESULT_OK&&data!=null){Intent i=new Intent(this,CaptureService.class);i.putExtra(CaptureService.EXTRA_RESULT_CODE,result);i.putExtra(CaptureService.EXTRA_DATA,data);startForegroundService(i);setStatus("● ТРАНСЛЯЦИЯ АКТИВНА",GREEN);}else if(request==REQUEST_CAPTURE)setStatus("● ДОСТУП К ЭКРАНУ НЕ ПОЛУЧЕН",0xFFFFB45E); }
+    @Override protected void onActivityResult(int request,int result,Intent data) { super.onActivityResult(request,result,data); if(request==REQUEST_FILE_PICK && result==RESULT_OK && data!=null) { sendPhoneFile(data.getData()); return; }
+        if(request==REQUEST_CAPTURE&&result==RESULT_OK&&data!=null){Intent i=new Intent(this,CaptureService.class);i.putExtra(CaptureService.EXTRA_RESULT_CODE,result);i.putExtra(CaptureService.EXTRA_DATA,data);startForegroundService(i);setStatus("● ТРАНСЛЯЦИЯ АКТИВНА",GREEN);}else if(request==REQUEST_CAPTURE)setStatus("● ДОСТУП К ЭКРАНУ НЕ ПОЛУЧЕН",0xFFFFB45E); }
+
+    private void startFileTransferServer() {
+        try {
+            fileTransferServer = new FileTransferServer(new InetSocketAddress("0.0.0.0", 8767));
+            fileTransferServer.start();
+        } catch (Exception e) {
+            if (fileTransferStatus != null) fileTransferStatus.setText("ERR:// FILE LINK UNAVAILABLE");
+        }
+    }
+    private void sendPhoneFile(Uri uri) {
+        new Thread(() -> {
+            try (InputStream in = getContentResolver().openInputStream(uri);
+                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                if (in == null) throw new IllegalStateException("Cannot open file");
+                byte[] buf = new byte[8192]; int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+                byte[] bytes = out.toByteArray();
+                String name = "phone-file";
+                android.database.Cursor c = getContentResolver().query(uri, null, null, null, null);
+                if (c != null) { try { int ix = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME); if (ix >= 0 && c.moveToFirst()) name = c.getString(ix); } finally { c.close(); } }
+                JSONObject meta = new JSONObject(); meta.put("type", "file"); meta.put("name", name); meta.put("size", bytes.length);
+                boolean sent = false;
+                if (fileTransferServer != null) for (WebSocket peer : fileTransferServer.getConnections()) {
+                    if (peer.isOpen()) { peer.send(meta.toString()); peer.send(bytes); sent = true; }
+                }
+                final boolean ok = sent;
+                runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText(ok ? "● ФАЙЛ ОТПРАВЛЕН  •  " + name : "ERR:// ПК НЕ ПОДКЛЮЧЁН"); });
+            } catch (Exception e) {
+                runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("ERR:// НЕ УДАЛОСЬ ПРОЧИТАТЬ ФАЙЛ"); });
+            }
+        }).start();
+    }
+    private class FileTransferServer extends WebSocketServer {
+        private volatile String incomingName = "received-file";
+        FileTransferServer(InetSocketAddress address) { super(address); setReuseAddr(true); }
+        @Override public void onOpen(WebSocket conn, ClientHandshake handshake) {
+            runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("● ПК ПОДКЛЮЧЁН  •  READY"); });
+        }
+        @Override public void onClose(WebSocket conn, int code, String reason, boolean remote) {
+            runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("● ОЖИДАНИЕ ПК  •  PORT 8767"); });
+        }
+        @Override public void onMessage(WebSocket conn, String message) {
+            try { JSONObject m = new JSONObject(message); if ("file".equals(m.optString("type"))) incomingName = new File(m.optString("name", "received-file")).getName(); }
+            catch (Exception ignored) { }
+        }
+        @Override public void onMessage(WebSocket conn, ByteBuffer bytes) {
+            try {
+                ByteBuffer copy = bytes.slice(); byte[] data = new byte[copy.remaining()]; copy.get(data);
+                File dir = new File(getExternalFilesDir(null), "AKIRA-Received"); if (!dir.exists()) dir.mkdirs();
+                File out = new File(dir, incomingName);
+                try (FileOutputStream stream = new FileOutputStream(out)) { stream.write(data); }
+                String saved = out.getName();
+                runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("● ПОЛУЧЕНО: " + saved + "  //  AKIRA-Received"); });
+            } catch (Exception e) {
+                runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("ERR:// SAVE FAILED"); });
+            }
+        }
+        @Override public void onError(WebSocket conn, Exception ex) { runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("ERR:// FILE SOCKET"); }); }
+        @Override public void onStart() { }
+    }
+
     private void startPcScreenServer() {
         try {
             pcScreenServer = new PcScreenServer(new InetSocketAddress("0.0.0.0", 8766));
@@ -178,6 +263,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onDestroy() {
         try { if (pcScreenServer != null) pcScreenServer.stop(500); } catch (Exception ignored) { }
+        try { if (fileTransferServer != null) fileTransferServer.stop(500); } catch (Exception ignored) { }
         if (radar != null) radar.stop();
         super.onDestroy();
     }
