@@ -1,5 +1,8 @@
 name: Build SYNKRON Desktop
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -26,6 +29,17 @@ jobs:
       - name: Build Windows installers
         working-directory: desktop
         run: npm run dist
+
+      - name: Publish direct Windows downloads
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-latest
+          name: SYNKRON Desktop — latest
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: |
+            desktop/dist/*.exe
 
       - name: Upload Windows builds
         uses: actions/upload-artifact@v4
