@@ -191,8 +191,8 @@ public class MainActivity extends Activity {
                 if (fileTransferServer != null) for (WebSocket peer : fileTransferServer.getConnections()) {
                     if (peer.isOpen()) { peer.send(meta.toString()); peer.send(bytes); sent = true; }
                 }
-                final boolean ok = sent;
-                runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText(ok ? "● ФАЙЛ ОТПРАВЛЕН  •  " + name : "ERR:// ПК НЕ ПОДКЛЮЧЁН"); });
+                final boolean ok = sent; final String sentName = name;
+                runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText(ok ? "● ФАЙЛ ОТПРАВЛЕН  •  " + sentName : "ERR:// ПК НЕ ПОДКЛЮЧЁН"); });
             } catch (Exception e) {
                 runOnUiThread(() -> { if (fileTransferStatus != null) fileTransferStatus.setText("ERR:// НЕ УДАЛОСЬ ПРОЧИТАТЬ ФАЙЛ"); });
             }
