@@ -321,8 +321,8 @@ jobs:
           quick = '''        LinearLayout quick = new LinearLayout(this);
                   quick.setOrientation(LinearLayout.HORIZONTAL);
                   quick.setGravity(Gravity.CENTER);
-                  String[] quickLabels = {"< BACK", "^ HOME", "RELINK"};
-                  String[] quickTypes = {"back", "home", "relink"};
+                  String[] quickLabels = {"< BACK", "^ HOME", "STOP", "RELINK"};
+                  String[] quickTypes = {"back", "home", "stop", "relink"};
                   for (int q = 0; q < quickLabels.length; q++) {
                       final String action = quickTypes[q];
                       Button command = new Button(this);
@@ -461,6 +461,7 @@ jobs:
                               } catch (Exception ignored) {}
                               return;
                           }
+                          if ("stop".equals(type)) { CaptureService.this.stopSelf(); return; }
                           if (a == null) return;
                           if ("tap".equals(type)) a.tap((float)j.optDouble("x"), (float)j.optDouble("y"));
                           else if ("back".equals(type)) a.goBack();
