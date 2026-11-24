@@ -61,97 +61,153 @@ public class MainActivity extends Activity {
         super.onCreate(b);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
+        getWindow().getDecorView().setSystemUiVisibility(0);
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         radar = new RadarBackground(this);
         scroll.setBackground(radar);
+
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(20), dp(22), dp(20), dp(28));
+        page.setPadding(dp(18), dp(18), dp(18), dp(30));
         scroll.addView(page);
 
+        // HEADER / BRAND
         LinearLayout top = new LinearLayout(this);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        top.setOrientation(LinearLayout.HORIZONTAL);
-        TextView logo = text("A", 27, GREEN, true);
+        TextView logo = text("A", 25, GREEN, true);
         logo.setGravity(Gravity.CENTER);
-        logo.setBackground(rounded(0xFF102A1B, 14, GREEN));
-        top.addView(logo, new LinearLayout.LayoutParams(dp(52), dp(52)));
+        logo.setBackground(rounded(0xFF0B2416, 16, GREEN));
+        top.addView(logo, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout brand = new LinearLayout(this);
         brand.setOrientation(LinearLayout.VERTICAL);
-        brand.setPadding(dp(12), 0, 0, 0);
-        brand.addView(text("AKIRA REMOTE", 20, 0xFFE5FFEC, true));
-        brand.addView(text("PHONE CONTROL STATION  /  v0.1", 10, MUTED, false));
+        brand.setPadding(dp(11), 0, 0, 0);
+        brand.addView(text("AKIRA", 21, 0xFFE8FFF0, true));
+        brand.addView(text("REMOTE  /  CONTROL NODE", 9, MUTED, true));
         top.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
-        TextView live = text("● LOCAL", 10, GREEN, true);
-        live.setPadding(dp(9), dp(7), dp(9), dp(7));
-        live.setBackground(rounded(0xFF102719, 20, LINE));
+        TextView live = text("● SYSTEM READY", 9, GREEN, true);
+        live.setPadding(dp(9), dp(8), dp(9), dp(8));
+        live.setBackground(rounded(0xFF0B1D12, 20, LINE));
         top.addView(live);
         page.addView(top);
-        page.addView(text("Управление трансляцией экрана", 17, 0xFFE5FFEC, true), params(-1,-2,0,22,0,0));
+        page.addView(text("PERSONAL REMOTE CONTROL SYSTEM", 9, MUTED, true), params(-1,-2,0,18,0,8));
 
-        LinearLayout statusCard = card(page, "СОСТОЯНИЕ СИСТЕМЫ", "SYSTEM STATUS  //  LIVE MONITOR");
+        // CENTRAL REACTOR
+        LinearLayout reactorCard = card(page, "AKIRA CORE", "MAINFRAME  //  DEVICE CONTROL");
+        CoreReactorView core = new CoreReactorView(this);
+        reactorCard.addView(core, params(-1, 190, 0, 0, 0, 8));
+        LinearLayout coreStats = new LinearLayout(this);
+        coreStats.setGravity(Gravity.CENTER);
+        coreStats.addView(metric("NODE", "PHONE"), new LinearLayout.LayoutParams(0,-2,1));
+        coreStats.addView(metric("MODE", "LOCAL"), new LinearLayout.LayoutParams(0,-2,1));
+        coreStats.addView(metric("PORT", "8765"), new LinearLayout.LayoutParams(0,-2,1));
+        reactorCard.addView(coreStats);
+
+        // SYSTEM STATUS
+        LinearLayout statusCard = card(page, "SYSTEM STATUS", "LIVE MONITOR  //  PHONE NODE");
         LinearLayout statusRow = new LinearLayout(this);
         statusRow.setGravity(Gravity.CENTER_VERTICAL);
-        status = text("● ГОТОВ К ЗАПУСКУ", 14, GREEN, true);
+        status = text("● READY TO TRANSMIT", 12, GREEN, true);
         statusRow.addView(status, new LinearLayout.LayoutParams(0,-2,1));
-        statusRow.addView(text("WS  /  8765", 10, MUTED, true));
+        statusRow.addView(text("WEBSOCKET / 8765", 9, MUTED, true));
         statusCard.addView(statusRow);
-        View divider = new View(this); divider.setBackgroundColor(LINE);
-        statusCard.addView(divider, params(-1,1,0,14,0,12));
-        LinearLayout details = new LinearLayout(this);
-        details.setOrientation(LinearLayout.HORIZONTAL);
-        details.addView(metric("ПРОТОКОЛ", "WebSocket"), new LinearLayout.LayoutParams(0,-2,1));
-        details.addView(metric("ПОРТ", "8765"), new LinearLayout.LayoutParams(0,-2,1));
-        details.addView(metric("СЕТЬ", "Wi-Fi / LAN"), new LinearLayout.LayoutParams(0,-2,1));
-        statusCard.addView(details);
+        View line = new View(this); line.setBackgroundColor(LINE);
+        statusCard.addView(line, params(-1,1,0,12,0,10));
+        LinearLayout stats = new LinearLayout(this);
+        stats.addView(metric("PROTOCOL", "WS"), new LinearLayout.LayoutParams(0,-2,1));
+        stats.addView(metric("NETWORK", "WI-FI"), new LinearLayout.LayoutParams(0,-2,1));
+        stats.addView(metric("ROLE", "HOST"), new LinearLayout.LayoutParams(0,-2,1));
+        statusCard.addView(stats);
 
-        LinearLayout network = card(page, "АДРЕС УСТРОЙСТВА", "TARGET ADDRESS  //  SHARE WITH WATCH");
-        ipValue = text(getLocalIp(), 22, GREEN, true); ipValue.setTextIsSelectable(true); network.addView(ipValue);
-        network.addView(text("Телефон и часы должны быть подключены к одной Wi-Fi сети.",11,MUTED,false), params(-1,-2,0,7,0,0));
-        Button copy = button("СКОПИРОВАТЬ IP", false); network.addView(copy, params(-1,44,0,14,0,0));
-        copy.setOnClickListener(v -> { ClipboardManager cm=(ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE); cm.setPrimaryClip(ClipData.newPlainText("AKIRA phone IP",getLocalIp())); Toast.makeText(this,"IP скопирован",Toast.LENGTH_SHORT).show(); });
-
-        LinearLayout controls = card(page, "УПРАВЛЕНИЕ", "CONTROL DECK  //  USER ACTIONS");
-        Button access = button("01   ВКЛЮЧИТЬ СЛУЖБУ УПРАВЛЕНИЯ", false); controls.addView(access,params(-1,50,0,0,0,9));
+        // CONTROL DECK
+        LinearLayout controls = card(page, "CONTROL DECK", "STREAMING  //  ACCESSIBILITY");
+        Button access = button("ENABLE CONTROL SERVICE", false);
+        controls.addView(access, params(-1,48,0,0,0,8));
         access.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
-        Button start = button("02   НАЧАТЬ ТРАНСЛЯЦИЮ ЭКРАНА", true); controls.addView(start,params(-1,54,0,0,0,9));
-        start.setOnClickListener(v -> { MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE); startActivityForResult(m.createScreenCaptureIntent(),REQUEST_CAPTURE); });
-        Button stop = button("03   ОСТАНОВИТЬ ТРАНСЛЯЦИЮ", false); controls.addView(stop,params(-1,46,0,0,0,0));
-        stop.setOnClickListener(v -> { Intent i=new Intent(this,CaptureService.class); i.setAction(CaptureService.ACTION_STOP); startService(i); setStatus("● ТРАНСЛЯЦИЯ ОСТАНОВЛЕНА",MUTED); });
+        Button start = button("▶  START SCREEN STREAM", true);
+        controls.addView(start, params(-1,52,0,0,0,8));
+        start.setOnClickListener(v -> {
+            MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);
+            startActivityForResult(m.createScreenCaptureIntent(),REQUEST_CAPTURE);
+        });
+        Button stop = button("■  STOP SCREEN STREAM", false);
+        controls.addView(stop, params(-1,46,0,0,0,0));
+        stop.setOnClickListener(v -> {
+            Intent i=new Intent(this,CaptureService.class); i.setAction(CaptureService.ACTION_STOP); startService(i);
+            setStatus("● STREAM STOPPED",MUTED);
+        });
 
-        LinearLayout pcMirror = card(page, "ЭКРАН WINDOWS", "PC → PHONE  //  LAN SCREEN RECEIVER");
-        pcStreamStatus = text("● ОЖИДАНИЕ ПК  •  PORT 8766", 12, GREEN, true);
-        pcMirror.addView(pcStreamStatus, params(-1, -2, 0, 0, 0, 10));
-        pcPreview = new ImageView(this);
-        pcPreview.setBackground(rounded(0xFF020604, 12, LINE));
-        pcPreview.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        pcMirror.addView(pcPreview, params(-1, 220, 0, 0, 0, 8));
-        pcMirror.addView(text("Открой AKIRA REMOTE на Windows, введи IP телефона и нажми START PC STREAM. Оба устройства должны быть в одной Wi-Fi сети.", 10, MUTED, false), params(-1, -2, 0, 4, 0, 0));
+        // DEVICE RADAR
+        LinearLayout devices = card(page, "DEVICE RADAR", "NETWORK TOPOLOGY  //  CONNECTED NODES");
+        addDeviceNode(devices, "01", "THIS PHONE", "HOST NODE  •  SCREEN SOURCE", true);
+        addDeviceNode(devices, "02", "WINDOWS PC", "WAITING FOR CONNECTION  •  PORT 8766", false);
+        addDeviceNode(devices, "03", "WEAR OS WATCH", "SCREEN RECEIVER  •  PORT 8765", false);
 
-        LinearLayout files = card(page, "ЦЕНТР ПЕРЕДАЧИ ФАЙЛОВ", "FILE TRANSFER  //  PHONE ⇄ WINDOWS");
-        fileTransferStatus = text("● ОЖИДАНИЕ ПК  •  PORT 8767", 11, GREEN, true);
-        files.addView(fileTransferStatus, params(-1, -2, 0, 0, 0, 10));
-        Button sendPhoneFile = button("↑   ОТПРАВИТЬ ФАЙЛ НА ПК", true);
-        files.addView(sendPhoneFile, params(-1, 50, 0, 0, 0, 8));
+        // ADDRESS
+        LinearLayout network = card(page, "NETWORK ADDRESS", "LOCAL LINK  //  SHARE WITH YOUR DEVICES");
+        ipValue = text(getLocalIp(), 20, GREEN, true);
+        ipValue.setTextIsSelectable(true);
+        network.addView(ipValue);
+        network.addView(text("Один Wi-Fi для локального подключения. Удалённый AKIRA LINK будет отдельным режимом.",10,MUTED,false), params(-1,-2,0,7,0,0));
+        Button copy = button("COPY IP ADDRESS", false);
+        network.addView(copy, params(-1,44,0,12,0,0));
+        copy.setOnClickListener(v -> {
+            ClipboardManager cm=(ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+            cm.setPrimaryClip(ClipData.newPlainText("AKIRA phone IP",getLocalIp()));
+            Toast.makeText(this,"IP скопирован",Toast.LENGTH_SHORT).show();
+        });
+
+        // FILE TRANSFER
+        LinearLayout files = card(page, "FILE TRANSFER", "DATA EXCHANGE  //  PHONE ⇄ WINDOWS");
+        fileTransferStatus = text("● WAITING FOR WINDOWS  •  PORT 8767", 10, GREEN, true);
+        files.addView(fileTransferStatus, params(-1,-2,0,0,0,12));
+        Button sendPhoneFile = button("↑  SEND FILE TO WINDOWS", true);
+        files.addView(sendPhoneFile, params(-1,50,0,0,0,8));
         sendPhoneFile.setOnClickListener(v -> {
             Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             pick.setType("*/*"); pick.addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(pick, REQUEST_FILE_PICK);
         });
-        files.addView(text("Файлы, отправленные с Windows, сохраняются в папке приложения AKIRA-Received. Для передачи оба устройства должны быть в одной Wi-Fi сети.", 10, MUTED, false));
-        files.addView(text("TRANSFER LINK  //  TCP 8767", 9, GREEN, true), params(-1,-2,0,10,0,0));
+        files.addView(text("Incoming files are saved in the app's AKIRA-Received folder. Keep this app open during transfer.",10,MUTED,false));
 
-        LinearLayout guide = card(page,"КАК ПОДКЛЮЧИТЬ ЧАСЫ","QUICK START  //  3 STEPS");
-        guide.addView(step("01","Разреши службу управления","Открой настройки специальных возможностей и включи AKIRA Remote."));
-        guide.addView(step("02","Запусти трансляцию","Нажми кнопку запуска и подтверди системный запрос Android."));
-        guide.addView(step("03","Подключи часы","Введи IP телефона в приложении на часах и нажми CONNECT."));
-        LinearLayout foot=new LinearLayout(this); foot.setGravity(Gravity.CENTER); foot.setPadding(0,dp(20),0,dp(4));
-        foot.addView(text("AKIRA SYSTEMS   •   LOCAL NETWORK ONLY",9,MUTED,true)); page.addView(foot);
+        // WINDOWS SCREEN RECEIVER
+        LinearLayout pcMirror = card(page, "PC SCREEN BEAM", "WINDOWS → PHONE  //  INCOMING DISPLAY");
+        pcStreamStatus = text("● WAITING FOR PC  •  PORT 8766", 10, GREEN, true);
+        pcMirror.addView(pcStreamStatus, params(-1,-2,0,0,0,10));
+        pcPreview = new ImageView(this);
+        pcPreview.setBackground(rounded(0xFF020604, 12, LINE));
+        pcPreview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        pcMirror.addView(pcPreview, params(-1,210,0,0,0,8));
+        pcMirror.addView(text("Запусти PC → PHONE stream в Windows-клиенте. Оба устройства должны быть в одной Wi-Fi сети.",10,MUTED,false));
+
+        LinearLayout guide = card(page, "QUICK START", "INITIALIZATION  //  3 STEPS");
+        guide.addView(step("01","Разреши службу управления","Включи AKIRA Remote в настройках специальных возможностей."));
+        guide.addView(step("02","Запусти трансляцию","Подтверди системный запрос Android на захват экрана."));
+        guide.addView(step("03","Подключи часы","Введи IP телефона в приложении на часах."));
+        TextView footer = text("AKIRA SYSTEMS  •  SECURE LOCAL SESSION", 9, MUTED, true);
+        footer.setGravity(Gravity.CENTER);
+        footer.setPadding(0,dp(16),0,dp(8));
+        page.addView(footer);
         setContentView(scroll);
         startPcScreenServer();
         startFileTransferServer();
     }
+
+    private void addDeviceNode(LinearLayout parent,String number,String title,String detail,boolean active) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(10),dp(10),dp(10),dp(10));
+        row.setBackground(rounded(0x6607130C,12,active?GREEN:LINE));
+        TextView id = text(number,11,active?GREEN:MUTED,true);
+        row.addView(id,params(30,-2,0,0,10,0));
+        LinearLayout labels = new LinearLayout(this); labels.setOrientation(LinearLayout.VERTICAL);
+        labels.addView(text(title,11,0xFFE5FFEC,true));
+        labels.addView(text(detail,8,MUTED,false),params(-1,-2,0,3,0,0));
+        row.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
+        row.addView(text(active?"● ONLINE":"○ STANDBY",8,active?GREEN:MUTED,true));
+        parent.addView(row,params(-1,-2,0,0,0,8));
+    }
+
     private LinearLayout card(LinearLayout parent,String title,String sub) {
         LinearLayout box=new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16),dp(15),dp(16),dp(16)); box.setBackground(rounded(PANEL,18,LINE));
         parent.addView(box,params(-1,-2,0,0,0,14)); box.addView(text(title,13,0xFFE5FFEC,true)); box.addView(text(sub,9,MUTED,false),params(-1,-2,0,4,0,14)); return box;
@@ -318,4 +374,36 @@ final class RadarBackground extends Drawable {
     @Override public void setAlpha(int alpha) { paint.setAlpha(alpha); }
     @Override public void setColorFilter(android.graphics.ColorFilter filter) { paint.setColorFilter(filter); }
     @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+}
+
+final class CoreReactorView extends View {
+    private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final ValueAnimator spin;
+    private float angle=0f;
+    private final float density;
+    CoreReactorView(Context c) {
+        super(c); density=c.getResources().getDisplayMetrics().density;
+        spin=ValueAnimator.ofFloat(0f,360f); spin.setDuration(14000); spin.setRepeatCount(ValueAnimator.INFINITE);
+        spin.setInterpolator(new android.view.animation.LinearInterpolator());
+        spin.addUpdateListener(a->{angle=(Float)a.getAnimatedValue();invalidate();});
+    }
+    @Override protected void onAttachedToWindow(){super.onAttachedToWindow();spin.start();}
+    @Override protected void onDetachedFromWindow(){spin.cancel();super.onDetachedFromWindow();}
+    @Override protected void onDraw(Canvas c){
+        super.onDraw(c); float cx=getWidth()/2f,cy=getHeight()/2f;
+        float r=Math.min(getWidth(),getHeight())*.39f;
+        p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1.2f*density);p.setColor(0x5539FF88);
+        c.drawCircle(cx,cy,r,p);c.drawCircle(cx,cy,r*.78f,p);c.drawCircle(cx,cy,r*.52f,p);
+        p.setStrokeWidth(3*density);p.setColor(0xFF39FF88);
+        RectF oval=new RectF(cx-r,cy-r,cx+r,cy+r);c.drawArc(oval,angle,92,false,p);
+        p.setStrokeWidth(2*density);p.setColor(0xFF168A50);
+        RectF inner=new RectF(cx-r*.78f,cy-r*.78f,cx+r*.78f,cy+r*.78f);c.drawArc(inner,-angle*1.4f,135,false,p);
+        p.setStyle(Paint.Style.FILL);p.setColor(0x2239FF88);c.drawCircle(cx,cy,r*.47f,p);
+        p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1*density);p.setColor(0xFF39FF88);c.drawCircle(cx,cy,r*.47f,p);
+        p.setStyle(Paint.Style.FILL);p.setColor(0xFFE5FFEC);p.setTextAlign(Paint.Align.CENTER);
+        p.setTypeface(Typeface.create("sans-serif-monospace",Typeface.BOLD));p.setTextSize(13*density);
+        c.drawText("AKIRA CORE",cx,cy-2*density,p);
+        p.setColor(0xFF39FF88);p.setTextSize(8*density);c.drawText("NODE // ACTIVE",cx,cy+15*density,p);
+        p.setTextAlign(Paint.Align.LEFT);
+    }
 }
