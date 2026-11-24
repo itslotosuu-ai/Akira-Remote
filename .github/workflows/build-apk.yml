@@ -226,7 +226,7 @@ jobs:
                   LinearLayout.LayoutParams subParams = new LinearLayout.LayoutParams(-1, -2);
                   subParams.topMargin = 5;
                   telemetry.addView(telemetrySub, subParams);
-                  View meter = new View(this);
+                  android.view.View meter = new android.view.View(this);
                   meter.setBackgroundColor(0xFF39FF88);
                   LinearLayout.LayoutParams meterParams = new LinearLayout.LayoutParams(-1, 3);
                   meterParams.topMargin = 14;
