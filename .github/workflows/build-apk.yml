@@ -555,10 +555,10 @@ jobs:
           p.write_text(s)
           PY
 
-      - name: Upload patched source for inspection
+      - name: Upload SYNKRON source for inspection
         uses: actions/upload-artifact@v4
         with:
-          name: AKIRA-REMOTE-source
+          name: SYNKRON-source
           path: source/AKIRA_REMOTE
           retention-days: 1
 
@@ -570,7 +570,7 @@ jobs:
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: AKIRA-REMOTE-APKs
+          name: SYNKRON-APKs
           path: |
             source/AKIRA_REMOTE/phone/build/outputs/apk/debug/*.apk
             source/AKIRA_REMOTE/watch/build/outputs/apk/debug/*.apk
