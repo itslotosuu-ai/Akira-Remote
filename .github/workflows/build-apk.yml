@@ -282,6 +282,30 @@ jobs:
           from pathlib import Path
           watch = Path("source/AKIRA_REMOTE/watch/src/main/java/com/akira/remotewatch/WatchActivity.java")
           s = watch.read_text()
+          s = s.replace("import android.os.Bundle;", "import android.os.Bundle;\\nimport android.os.Handler;\\nimport android.os.Looper;")
+          field = "    private final AtomicReference<android.graphics.Bitmap> latest = new AtomicReference<>();"
+          additions = """    private final AtomicReference<android.graphics.Bitmap> latest = new AtomicReference<>();
+              private TextView hud, log;
+              private final Handler uiHandler = new Handler(Looper.getMainLooper());
+              private long pingStartedAt, lastRtt = -1, fpsWindowStart = System.currentTimeMillis();
+              private int frameCounter, currentFps;
+              private String phoneBattery = "--", phoneTemp = "--", frameSize = "--";
+              private final Runnable pingTask = new Runnable() {
+                  @Override public void run() {
+                      if (client != null && client.isOpen()) {
+                          try {
+                              pingStartedAt = System.currentTimeMillis();
+                              JSONObject ping = new JSONObject();
+                              ping.put("type", "ping");
+                              client.send(ping.toString());
+                          } catch (Exception ignored) {}
+                          uiHandler.postDelayed(this, 2500);
+                      }
+                  }
+              };"""
+          if "private TextView hud, log;" not in s:
+              if field not in s: raise SystemExit("watch field insertion anchor missing")
+              s = s.replace(field, additions, 1)
           anchor = '        root.addView(status, new LinearLayout.LayoutParams(-1, 24));'
           hud = '''        hud = new TextView(this);
                   hud.setText("HUD:// WAITING FOR TELEMETRY");
