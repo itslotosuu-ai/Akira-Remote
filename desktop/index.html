@@ -65,22 +65,64 @@ body[data-wall="violet"]{background:radial-gradient(ellipse at 50% 45%,#1a0e29 0
 body[data-wall="amber"]{background:radial-gradient(ellipse at 50% 45%,#241808 0,#070502 62%)}
 @media(max-width:850px){.hud-orb{left:58%;top:42%;opacity:.28}}
 
+
+/* FINAL CONSOLE LAYOUT */
+:root{--hud-speed:36s}
+body{overflow-x:hidden}
+header{padding:15px 22px;min-height:76px;position:sticky;top:0;z-index:5;border-bottom:1px solid color-mix(in srgb,var(--green) 30%,transparent);box-shadow:0 8px 30px #0008}
+header:after{content:"ONLINE  •  ENCRYPTED LOCAL LINK";color:var(--green);font-size:10px;letter-spacing:1.5px;padding:9px 12px;border:1px solid color-mix(in srgb,var(--green) 35%,transparent);border-radius:5px;background:#06150c99}
+.brand{font-size:22px;letter-spacing:3px}
+main{max-width:1600px;margin:0 auto;padding:22px;grid-template-columns:188px minmax(0,1fr) 310px;gap:15px;align-items:start}
+.panel{border-radius:8px;position:relative;overflow:hidden}
+.panel:before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);opacity:.45;pointer-events:none}
+.sidebar{display:flex;flex-direction:column;gap:8px;min-height:calc(100vh - 120px);padding:13px}
+.nav-label{font-size:9px;letter-spacing:2px;color:var(--muted);padding:8px 10px 5px}
+.nav-link{display:flex;align-items:center;gap:11px;padding:12px 10px;border:1px solid transparent;border-radius:5px;color:#8bb99c;text-decoration:none;font-size:11px;letter-spacing:.5px;transition:.2s}
+.nav-link:hover,.nav-link.active{color:var(--green);border-color:color-mix(in srgb,var(--green) 32%,transparent);background:color-mix(in srgb,var(--green) 9%,transparent);box-shadow:inset 2px 0 var(--green),0 0 18px #39ff8810}
+.nav-icon{width:19px;text-align:center;font-size:15px}
+.nav-foot{margin-top:auto;padding:12px 9px;border-top:1px solid var(--line);font-size:9px;line-height:1.9;color:var(--muted)}
+main>section.panel{min-width:0;padding:18px}
+.toolbar input{background:#020805aa;border-radius:4px}
+button{border-radius:4px;letter-spacing:.5px}
+.screen-wrap{height:min(72vh,820px);min-height:420px;border-radius:5px;border-color:color-mix(in srgb,var(--green) 30%,transparent);background:linear-gradient(145deg,#020805ee,#04140b99);box-shadow:inset 0 0 50px #000,0 0 30px #39ff8808}
+#placeholder{font-size:11px;letter-spacing:2px;color:#3c9b65}
+#placeholder:before{content:"◈";display:block;font-size:44px;line-height:2;color:var(--green);opacity:.55;text-shadow:0 0 24px var(--green)}
+#status{padding:10px 12px;border-left:2px solid var(--green);background:#06150b99;letter-spacing:.6px}
+.side{padding:15px;display:flex;flex-direction:column;gap:4px}
+.side h3{letter-spacing:1.7px}
+.actions button{font-size:10px;min-height:48px}
+.settings{scroll-margin-top:90px}
+.pc-stream{scroll-margin-top:90px}
+#controls{scroll-margin-top:90px}
+.hud-orb{width:min(70vw,850px);height:min(70vw,850px);top:53%;opacity:.35}
+.hud-ring{filter:drop-shadow(0 0 5px var(--green))}
+@media(max-width:1120px){main{grid-template-columns:150px minmax(0,1fr) 280px;padding:14px;gap:10px}.sidebar{padding:9px}.nav-link{font-size:10px;padding:10px 7px}}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:12px}.sidebar{min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;order:0}.nav-label,.nav-foot{display:none}.nav-link{justify-content:center;flex-direction:column;gap:4px;padding:9px 3px;font-size:9px}.side{order:2}.screen-wrap{height:55vh;min-height:280px}header:after{display:none}.hud-orb{min-width:360px;min-height:360px;opacity:.2}}
+
 </style>
 </head>
 <body>
 <div class="hud-orb" aria-hidden="true"><div class="hud-ring ring-a"></div><div class="hud-ring ring-b"></div><div class="hud-ring ring-c"></div><div class="hud-core"></div></div>
 <header><div><div class="brand">AKIRA // REMOTE</div><div class="sub">DESKTOP CONSOLE • WEBSOCKET LINK • PORT 8765</div></div><div class="sub">LOCAL CONTROL INTERFACE</div></header>
 <main>
-<section class="panel">
+<nav class="panel sidebar" aria-label="Основная навигация">
+ <div class="nav-label">MAIN SYSTEM</div>
+ <a class="nav-link active" href="#viewport"><span class="nav-icon">⌂</span> OVERVIEW</a>
+ <a class="nav-link" href="#controls"><span class="nav-icon">⌘</span> CONTROL DECK</a>
+ <a class="nav-link" href="#pc-stream"><span class="nav-icon">▣</span> SCREEN BEAM</a>
+ <a class="nav-link" href="#appearance"><span class="nav-icon">◈</span> CUSTOMIZE</a>
+ <div class="nav-foot">AKIRA CORE v2.0<br>LOCAL NETWORK<br>SYS.STATUS: READY</div>
+</nav>
+<section class="panel" id="viewport">
  <div class="toolbar"><input id="ip" placeholder="IP телефона, например 192.168.1.25" autocomplete="off"><button id="connect">CONNECT</button><button id="disconnect" disabled>DISCONNECT</button></div>
  <div id="status">SYS:// STANDBY — запусти трансляцию на телефоне и введи его IP</div>
  <div class="screen-wrap" id="viewport"><div id="placeholder">WAITING FOR VIDEO STREAM<br>PHONE → DESKTOP</div><img id="screen" alt="Экран телефона"></div>
 </section>
-<aside class="panel side">
+<aside class="panel side" id="controls">
  <h3>CONTROL DECK</h3>
  <div class="actions"><button data-cmd="back">← BACK</button><button data-cmd="home">⌂ HOME</button><button data-cmd="stop">■ STOP STREAM</button><button id="fullscreen">⛶ FULLSCREEN</button></div>
  
- <div class="settings">
+ <div class="settings" id="appearance">
   <h3>INTERFACE CUSTOMIZER</h3>
   <div class="settings-grid">
    <label class="setting">ACCENT COLOR
@@ -108,7 +150,7 @@ body[data-wall="amber"]{background:radial-gradient(ellipse at 50% 45%,#241808 0,
   <div class="sub" id="appearanceStatus">LOCAL PROFILE // READY</div>
  </div>
 
- <div class="pc-stream">
+ <div class="pc-stream" id="pc-stream">
   <h3>PC → PHONE // SCREEN BEAM</h3>
   <input id="pcPhoneIp" placeholder="IP телефона, например 192.168.1.25" autocomplete="off">
   <select id="pcDisplay"><option value="">Загрузка дисплеев…</option></select>
