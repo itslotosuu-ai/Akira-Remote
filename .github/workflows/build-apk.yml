@@ -293,7 +293,7 @@ jobs:
                   root.addView(hud, new LinearLayout.LayoutParams(-1, 25));'''
           if 'HUD:// WAITING FOR TELEMETRY' not in s:
               if anchor not in s: raise SystemExit("HUD insertion anchor missing")
-              s = s.replace(anchor, anchor + "\\n" + hud, 1)
+              s = s.replace(anchor, anchor + chr(10) + hud, 1)
           quick = '''        LinearLayout quick = new LinearLayout(this);
                   quick.setOrientation(LinearLayout.HORIZONTAL);
                   quick.setGravity(Gravity.CENTER);
