@@ -429,18 +429,46 @@ jobs:
                   if (client != null) client.close();''', 1)
           watch.write_text(s)
 
+          service = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/ControlAccessibilityService.java")
+          a = service.read_text()
+          if "public void goBack()" not in a:
+              a = a.replace("    public void tap(", "    public void goBack() { performGlobalAction(GLOBAL_ACTION_BACK); }" + chr(10) + "    public void goHome() { performGlobalAction(GLOBAL_ACTION_HOME); }" + chr(10) + "    public void tap(", 1)
+          service.write_text(a)
+
           capture = Path("source/AKIRA_REMOTE/phone/src/main/java/com/akira/remote/CaptureService.java")
           c = capture.read_text()
-          c = c.replace('''                ControlAccessibilityService a = ControlAccessibilityService.INSTANCE;
-                          if (a == null) return;
-                          String type = j.optString("type");''', '''                ControlAccessibilityService a = ControlAccessibilityService.INSTANCE;
-                          String type = j.optString("type");''', 1)
-          c = c.replace('''                    return;
+          if "BatteryManager" not in c:
+              c = c.replace("import android.app.*;", "import android.app.*;" + chr(10) + "import android.content.IntentFilter;" + chr(10) + "import android.os.BatteryManager;", 1)
+          old_commands = """                ControlAccessibilityService a = ControlAccessibilityService.INSTANCE;
+                          String type = j.optString("type");
+                          if ("tap".equals(type)) a.tap((float)j.optDouble("x"), (float)j.optDouble("y"));
+                          else if ("swipe".equals(type)) a.swipe((float)j.optDouble("x1"), (float)j.optDouble("y1"),
+                              (float)j.optDouble("x2"), (float)j.optDouble("y2"), j.optLong("duration", 300));"""
+          new_commands = """                ControlAccessibilityService a = ControlAccessibilityService.INSTANCE;
+                          String type = j.optString("type");
+                          if ("ping".equals(type)) {
+                              try {
+                                  Intent battery = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+                                  int level = battery == null ? -1 : battery.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                                  int scale = battery == null ? 100 : battery.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+                                  int temp = battery == null ? -1 : battery.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);
+                                  JSONObject pong = new JSONObject();
+                                  pong.put("type", "pong");
+                                  pong.put("battery", level < 0 ? "--" : Math.round(level * 100f / Math.max(1, scale)) + "%");
+                                  pong.put("temp", temp < 0 ? "--" : String.format(java.util.Locale.US, "%.1fC", temp / 10f));
+                                  conn.send(pong.toString());
+                              } catch (Exception ignored) {}
+                              return;
                           }
-                          if ("tap".equals(type)) a.tap''', '''                    return;
-                          }
                           if (a == null) return;
-                          if ("tap".equals(type)) a.tap''', 1)
+                          if ("tap".equals(type)) a.tap((float)j.optDouble("x"), (float)j.optDouble("y"));
+                          else if ("back".equals(type)) a.goBack();
+                          else if ("home".equals(type)) a.goHome();
+                          else if ("swipe".equals(type)) a.swipe((float)j.optDouble("x1"), (float)j.optDouble("y1"),
+                              (float)j.optDouble("x2"), (float)j.optDouble("y2"), j.optLong("duration", 300));"""
+          if "if (\"ping\".equals(type))" not in c:
+              if old_commands not in c: raise SystemExit("phone command handler anchor missing")
+              c = c.replace(old_commands, new_commands, 1)
           capture.write_text(c)
           PY
 
