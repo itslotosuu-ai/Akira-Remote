@@ -138,7 +138,7 @@ class MainActivity : Activity() {
             setHintTextColor(Color.rgb(105, 125, 115))
             setTextColor(Color.WHITE)
             textSize = 12f
-            singleLine = true
+            setSingleLine(true)
             imeOptions = EditorInfo.IME_ACTION_DONE
             setPadding(12, 2, 12, 2)
             background = rounded(Color.rgb(15, 25, 23), Color.rgb(0, 120, 75))
